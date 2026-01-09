@@ -10,6 +10,13 @@ var selected: number | undefined = undefined;
 var blocks: (GridBlock | null)[] = [];
 var cells: HTMLDivElement[] = [];
 
+function updateBlocks() {
+	var classes = "";
+	if (!blocks[ii]) classes += " empty";
+	if (ii === selected) classes += " selected";
+	cells[ii].className = classes;
+}
+
 function moveCursor(dx: number, dy: number) {
 	if (selected === undefined) selected = 0;
 	else {
@@ -29,15 +36,39 @@ function moveCursor(dx: number, dy: number) {
 	}
 
 	for (var ii = 0; ii < cells.length; ii++) {
-		var classes = "";
-		if (!blocks[ii]) classes += " empty";
-		if (ii === selected) classes += " selected";
-		cells[ii].className = classes;
+		if (ii === selected) cells[ii].classList.add("selected");
+		else cells[ii].classList.remove("selected");
+	}
+}
+
+function clickBlock() {
+	if (selected === undefined) {
+		moveCursor(0, 0);
+		return;
+	}
+	while (blocks.length <= selected) blocks.push(null);
+	blocks[selected] = { img: "", id: "" };
+
+	for (var ii = 0; ii < cells.length; ii++) {
+		if (ii === selected) cells[ii].classList.remove("empty");
+	}
+}
+
+function deleteBlock() {
+	if (selected === undefined) {
+		moveCursor(0, 0);
+		return;
+	}
+	if (confirm("Are you sure you want to delete " + selected + "?")) {
+		blocks[selected] = null;
+		for (var ii = 0; ii < cells.length; ii++) {
+			if (ii === selected) cells[ii].classList.add("empty");
+		}
 	}
 }
 
 window.addEventListener("keydown", function(event) {
-	if (!["ArrowUp", "ArrowLeft", "ArrowRight", "ArrowDown"].includes(event.key)) return;
+	if (!["ArrowUp", "ArrowLeft", "ArrowRight", "ArrowDown", "Enter"].includes(event.key)) return;
 	if (selected === undefined) selected = 0;
 	else {
 		switch (event.key) {
@@ -57,6 +88,14 @@ window.addEventListener("keydown", function(event) {
 				moveCursor(1, 0);
 				break;
 			}
+			case "Enter": {
+				clickBlock();
+				break;
+			}
+			case "Delete": {
+				deleteBlock();
+				break;
+			}
 		}
 	}
 });
@@ -67,6 +106,8 @@ window.addEventListener("buttondown", function(event: CustomEvent<keyof typeof W
 	else if (button == "LDOWN" || button == "RDOWN" || button == "DDOWN") moveCursor(0, 1);
 	else if (button == "LLEFT" || button == "RLEFT" || button == "DLEFT") moveCursor(-1, 0);
 	else if (button == "LRIGHT" || button == "RRIGHT" || button == "DRIGHT") moveCursor(1, 0);
+	else if (button == "A") clickBlock();
+	else if (button == "B") deleteBlock();
 } as any);
 
 var table = document.getElementById("grid")!;

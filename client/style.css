@@ -30,6 +30,7 @@ body {
   padding: 0;
   margin: 2vh;
   aspect-ratio: 1/1;
+  background: -webkit-linear-gradient(#ebebeb, #c4c4c4);
   background: linear-gradient(#ebebeb, #c4c4c4);
 	-webkit-transition: all .25s ease;
   transition: all .25s ease;
@@ -42,9 +43,13 @@ body {
 	opacity: 0.3;
 }
 
+#grid td > div.selected {
+	border-color: #2a557f;
+  -webkit-transform: scale(1.1);
+  transform: scale(1.1);
+}
+
 #grid td > div.empty.selected {
 	border-color: #55aaff;
 	opacity: 1;
-  -webkit-transform: scale(1.1);
-  transform: scale(1.1);
 }
