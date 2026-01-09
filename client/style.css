@@ -53,3 +53,24 @@ body {
 	border-color: #55aaff;
 	opacity: 1;
 }
+
+#overlay {
+	position: fixed;
+	left: 0;
+	top: 0;
+	width: 100vw;
+	height: 100vh;
+	text-align: center;
+	color: #ffffff;
+	background-color: #000000;
+	opacity: 0.8;
+	-webkit-transition: all .5s ease;
+  transition: all .5s ease;
+	font-size: 5vh;
+	z-index: 1000;
+}
+
+#overlay.disabled {
+	display: none;
+	opacity: 0;
+}

@@ -6,6 +6,7 @@
 - `fetch`
 - `for of` loop
 - Array's `forEach` (and probably other array functions)
+- Promise
 
 ## Unsupported CSS
 - Any kind of viewport units (vw, vh, vmax, vmin)

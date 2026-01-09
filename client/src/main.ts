@@ -9,15 +9,18 @@ var width = 5, height = 3;
 var selected: number | undefined = undefined;
 var blocks: (GridBlock | null)[] = [];
 var cells: HTMLDivElement[] = [];
+var waiting = false;
 
-function updateBlocks() {
-	var classes = "";
-	if (!blocks[ii]) classes += " empty";
-	if (ii === selected) classes += " selected";
-	cells[ii].className = classes;
+var overlayDiv = document.getElementById("overlay")!;
+
+function setOverlay(enabled: boolean) {
+	waiting = enabled;
+	if (enabled) overlayDiv.classList.remove("disabled");
+	else overlayDiv.classList.add("disabled");
 }
 
 function moveCursor(dx: number, dy: number) {
+	if (waiting) return;
 	if (selected === undefined) selected = 0;
 	else {
 		var newSelected = selected;
@@ -42,19 +45,36 @@ function moveCursor(dx: number, dy: number) {
 }
 
 function clickBlock() {
+	if (waiting) return;
 	if (selected === undefined) {
 		moveCursor(0, 0);
 		return;
 	}
 	while (blocks.length <= selected) blocks.push(null);
-	blocks[selected] = { img: "", id: "" };
-
-	for (var ii = 0; ii < cells.length; ii++) {
-		if (ii === selected) cells[ii].classList.remove("empty");
+	if (blocks[selected]) {
+		// TODO
+	} else {
+		var command = prompt("Enter command for button:");
+		if (command === null) return;
+		setOverlay(true);
+		fetch("http://192.168.2.240:8000/api/new", { method: "POST", body: JSON.stringify({ index: selected, cmd: command }), callback: function(req) {
+			if (req.readyState == 4) {
+				setOverlay(false);
+				if (req.status == 200) {
+					alert("Accepted");
+					blocks[selected!] = req.response;
+					for (var ii = 0; ii < cells.length; ii++) {
+						if (ii === selected) cells[ii].classList.remove("empty");
+					}
+				} else if (req.status == 403) alert("Rejected");
+				else alert("Error " + req.status);
+			}
+		} });
 	}
 }
 
 function deleteBlock() {
+	if (waiting) return;
 	if (selected === undefined) {
 		moveCursor(0, 0);
 		return;
