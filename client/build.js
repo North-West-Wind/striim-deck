@@ -13,6 +13,8 @@ while (matches) {
 	content = content.replace(scriptRegex, `<script type="text/javascript">${fs.readFileSync(path.join("dist", matches[1]))}</script>`);
 	matches = content.match(scriptRegex);
 }
+content = content.replaceAll(/.*Object.defineProperty.*/gm, "");
+content = content.replaceAll(/.*require.*/gm, "");
 fs.writeFileSync("dist/index.html", content);
 
 // Transform CSS

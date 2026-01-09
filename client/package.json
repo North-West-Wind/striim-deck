@@ -1,0 +1,5 @@
+{
+  "devDependencies": {
+    "@types/wiiu": "^0.0.31"
+  }
+}

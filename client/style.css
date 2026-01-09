@@ -31,7 +31,8 @@ body {
   margin: 2vh;
   aspect-ratio: 1/1;
   background: linear-gradient(#ebebeb, #c4c4c4);
-  transition: transform .5s ease;
+	-webkit-transition: all .25s ease;
+  transition: all .25s ease;
   transform-origin: center;
 }
 
@@ -42,6 +43,8 @@ body {
 }
 
 #grid td > div.empty.selected {
-  transform-origin: center;
+	border-color: #55aaff;
+	opacity: 1;
+  -webkit-transform: scale(1.1);
   transform: scale(1.1);
 }
