@@ -15,7 +15,7 @@ body {
 }
 .app {
   max-width: 1280px;
-  margin: auto;
+  margin: 0 auto;
   padding: 2vh;
   text-align: center;
   position: relative;
@@ -36,9 +36,9 @@ body {
 }
 
 #grid td > div.empty {
-  border: #48484848 solid 1vmax;
-  border-radius: 0;
+  border: #484848 dotted 1vmax;
   background: transparent;
+	opacity: 0.3;
 }
 
 #grid td > div.empty.selected {
