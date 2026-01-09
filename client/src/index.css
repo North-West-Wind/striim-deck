@@ -43,4 +43,17 @@ body::before {
   margin: 2vh;
   aspect-ratio: 1/1;
   background: linear-gradient(#ebebeb, #c4c4c4);
+  transition: transform .5s ease;
+  transform-origin: center;
+}
+
+.grid td > div.empty {
+  border: #48484848 dotted 1vmax;
+  border-radius: 0;
+  background: transparent;
+}
+
+.grid td > div.empty.selected {
+  transform-origin: center;
+  transform: scale(1.1);
 }
