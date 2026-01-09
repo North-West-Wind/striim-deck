@@ -13,18 +13,6 @@ body {
   min-height: 100vh;
   position: relative;
 }
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  opacity: 0.05;
-  /*background: url("./logo.svg");*/
-  background-size: 256px;
-  transform: rotate(-12deg) scale(1.35);
-  animation: slide 30s linear infinite;
-  pointer-events: none;
-}
 .app {
   max-width: 1280px;
   margin: auto;
@@ -34,7 +22,7 @@ body::before {
   z-index: 1;
 }
 
-.grid td > div {
+#grid td > div {
   border: #484848 solid 1vmax;
   border-radius: 1vmax;
   width: 20vh;
@@ -47,13 +35,13 @@ body::before {
   transform-origin: center;
 }
 
-.grid td > div.empty {
-  border: #48484848 dotted 1vmax;
+#grid td > div.empty {
+  border: #48484848 solid 1vmax;
   border-radius: 0;
   background: transparent;
 }
 
-.grid td > div.empty.selected {
+#grid td > div.empty.selected {
   transform-origin: center;
   transform: scale(1.1);
 }
