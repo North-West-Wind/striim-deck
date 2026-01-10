@@ -1,3 +1,7 @@
+function serverUrl(url: string) {
+	return "http://" + window.location.host + url;
+}
+
 function fetch(url: string, options?: { method?: string, body?: string, contentType?: string, onOk?: (req: XMLHttpRequest) => void, onNotOk?: (req: XMLHttpRequest) => void }) {
 	var req = new XMLHttpRequest();
 	if (options && options.method) req.open(options.method, url, true);
@@ -18,5 +22,5 @@ function fetch(url: string, options?: { method?: string, body?: string, contentT
 }
 
 function log(message: string) {
-	fetch("http://192.168.2.240:8000/api/log", { method: "POST", body: message });
+	fetch(serverUrl("/api/log"), { method: "POST", body: message });
 }

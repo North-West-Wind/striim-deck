@@ -28,7 +28,7 @@ function createNewBlock(cmd: string, img: string) {
 	setOverlay(true);
 	imageChooserDiv.classList.add("disabled");
 	imageListDiv.innerHTML = "";
-	fetch("http://192.168.2.240:8000/api/new", { method: "POST", body: JSON.stringify({ index: selected, cmd: cmd, img: img }), onOk: function(req) {
+	fetch(serverUrl("/api/new"), { method: "POST", body: JSON.stringify({ index: selected, cmd: cmd, img: img }), onOk: function(req) {
 		setOverlay(false);
 		alert("Accepted");
 		var block = JSON.parse(req.response) as GridBlock;
@@ -105,13 +105,24 @@ function clickBlock() {
 	}
 	while (blocks.length <= selected) blocks.push(null);
 	if (blocks[selected]) {
-		// TODO
+		var cell = cells[selected];
+		cell.classList.add("running");
+		fetch(serverUrl("/api/run"), { method: "POST", body: blocks[selected]!.id, onOk: function() {
+			cell.classList.remove("running");
+			cell.classList.add("success");
+			setTimeout(function() { cell.classList.remove("success"); }, 3000);
+		}, onNotOk: function() {
+			log("not ok");
+			cell.classList.remove("running");
+			cell.classList.add("failure");
+			setTimeout(function() { cell.classList.remove("failure"); }, 3000);
+		} });
 	} else {
 		var command = prompt("Enter command for button:");
 		if (command === null) return;
 		// Fetch images
 		setOverlay(true);
-		fetch("http://192.168.2.240:8000/api/images", { onOk: function(req) {
+		fetch(serverUrl("/api/images"), { onOk: function(req) {
 			setOverlay(false);
 			// Hydrate image list
 			imgSelected = 0;
@@ -147,10 +158,16 @@ function deleteBlock() {
 		return;
 	}
 	if (confirm("Are you sure you want to delete " + selected + "?")) {
-		blocks[selected] = null;
-		for (var ii = 0; ii < cells.length; ii++) {
-			if (ii === selected) cells[ii].classList.add("empty");
-		}
+		var block = blocks[selected]!;
+		var copySelected = selected;
+		fetch(serverUrl("/api/delete"), { method: "POST", body: block.id, onOk: function() {
+			blocks[copySelected] = null;
+			for (var ii = 0; ii < cells.length; ii++)
+				if (ii === copySelected) {
+					cells[ii].classList.add("empty");
+					cells[ii].innerHTML = "";
+				}
+		} });
 	}
 }
 
@@ -200,22 +217,32 @@ var table = document.getElementById("grid")!;
 for (var ii = 0; ii < height; ii++) {
 	var tr = document.createElement("tr");
 	for (var jj = 0; jj < width; jj++) {
+		var index = ii * width + jj;
 		var td = document.createElement("td");
-		var block = blocks[ii * width + jj];
+		var block = blocks[index];
 		var classes = "";
 		if (!block) classes += " empty";
-		if (ii * width + jj === selected) classes += " selected";
+		if (index === selected) classes += " selected";
 		var div = document.createElement("div");
+		div.setAttribute("index", '' + index);
 		div.className = classes;
 		cells.push(div);
 		td.appendChild(div);
 		tr.appendChild(td);
+
+		div.onclick = function(ev) {
+			var index = parseInt((ev.target as HTMLDivElement).getAttribute("index") || "0");
+			if (selected !== index) {
+				selected = index;
+				moveCursor(0, 0);
+			} else clickBlock();
+		};
 	}
 	table.appendChild(tr);
 }
 
 // Get initial blocks
-fetch("http://192.168.2.240:8000/api/blocks", { onOk: function(req) {
+fetch(serverUrl("/api/blocks"), { onOk: function(req) {
 	var serverBlocks = JSON.parse(req.response) as ({ [key: string]: GridBlock & { index: number } });
 	var keys = Object.keys(serverBlocks);
 	for (var ii = 0; ii < keys.length; ii++) {

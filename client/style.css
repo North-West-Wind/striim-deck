@@ -54,6 +54,23 @@ body {
 	opacity: 1;
 }
 
+#grid td > div.running {
+  background: -webkit-linear-gradient(#c4c4c4, #ebebeb);
+  background: linear-gradient(#c4c4c4, #ebebeb);
+}
+
+#grid td > div.success {
+	border-color: #2a7f2d;
+  background: -webkit-linear-gradient(#a5e0a2, #729f71);
+  background: linear-gradient(#a5e0a2, #729f71);
+}
+
+#grid td > div.failure {
+	border-color: #7f2a2a;
+  background: -webkit-linear-gradient(#e59999, #ca8a8a);
+  background: linear-gradient(#e59999, #ca8a8a);
+}
+
 #grid img {
 	position: relative;
 	width: 100%;

@@ -50,6 +50,7 @@ func main() {
 	router.HandleFunc("POST /api/log", handleLog)
 	router.HandleFunc("GET /api/blocks", getBlocks)
 	router.HandleFunc("POST /api/new", newBlock)
+	router.HandleFunc("POST /api/delete", deleteBlock)
 	router.HandleFunc("POST /api/run", runBlock)
 	router.HandleFunc("GET /api/images/", getImages)
 
@@ -141,13 +142,28 @@ func newBlock(w http.ResponseWriter, r *http.Request) {
 			w.Write([]byte("500 Internal Server Error"))
 			return
 		}
-		SaveConfig()
 		w.Header().Add("Content-Type", "application/json")
 		w.Write(data)
+		SaveConfig()
 	} else {
 		w.WriteHeader(http.StatusForbidden)
 		w.Write([]byte("403 Forbidden"))
 	}
+}
+
+func deleteBlock(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	all, err := io.ReadAll(r.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("500 Internal Server Error"))
+		return
+	}
+	id := string(all)
+	delete(config.Blocks, id)
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("200 OK"))
+	SaveConfig()
 }
 
 func runBlock(w http.ResponseWriter, r *http.Request) {
@@ -172,9 +188,10 @@ func runBlock(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	output, err := exec.Command(argv[0], argv[1:]...).Output()
-	if err == nil {
+	if err != nil {
+		log.Println(err)
 		w.WriteHeader(http.StatusGone)
-		w.Write(make([]byte, 0))
+		w.Write([]byte(""))
 	} else {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(output))

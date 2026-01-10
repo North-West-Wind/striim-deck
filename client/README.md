@@ -1,6 +1,7 @@
 # Wii U Notes
 ## Unsupported Javascript
 - `let` and `const`
+	- `var` is global scope. Be aware of overriding!
 - Backticks (`)
 - Lambda/Arrow functions
 - `fetch`
