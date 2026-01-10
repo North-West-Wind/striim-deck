@@ -5,31 +5,31 @@ type GridBlock = {
 	img: string;
 }
 
-var width = 5, height = 3, columns = 4, rows = 2;
+var width = 5, height = 3, columns = 4;
 var selected: number | undefined = undefined;
 var imgSelected = 0;
 var blocks: (GridBlock | null)[] = [];
 var cells: HTMLDivElement[] = [];
 var imgs: HTMLImageElement[] = [];
-var waiting = false;
+var loading = false;
 var command: string | null = null;
 
 var imageChooserDiv = document.getElementById("image-chooser")!;
 var customImageButton = document.getElementById("custom-image")!;
 var imagePage = document.getElementById("image-page")!;
-var overlayDiv = document.getElementById("overlay")!;
+var loadingDiv = document.getElementById("loading")!;
 
-function setOverlay(enabled: boolean) {
-	waiting = enabled;
-	if (enabled) overlayDiv.classList.remove("disabled");
-	else overlayDiv.classList.add("disabled");
+function setLoading(enabled: boolean) {
+	loading = enabled;
+	if (enabled) loadingDiv.classList.remove("hidden");
+	else loadingDiv.classList.add("hidden");
 }
 
 function createNewBlock(img: string) {
-	setOverlay(true);
+	setLoading(true);
 	imageChooserDiv.classList.add("disabled");
 	fetch(serverUrl("/api/new"), { method: "POST", body: JSON.stringify({ index: selected, cmd: command, img: img }), onOk: function(req) {
-		setOverlay(false);
+		setLoading(false);
 		alert("Accepted");
 		var block = JSON.parse(req.response) as GridBlock;
 		blocks[selected!] = block;
@@ -39,14 +39,14 @@ function createNewBlock(img: string) {
 				cells[ii].innerHTML = '<img src="' + block.img + '">';
 			}
 	}, onNotOk: function(req) {
-		setOverlay(false);
+		setLoading(false);
 		if (req.status == 403) alert("Rejected");
 		else alert("Error " + req.status);
 	} });
 }
 
 function moveCursor(dx: number, dy: number) {
-	if (waiting) return;
+	if (loading) return;
 	if (!imageChooserDiv.classList.contains("disabled")) {
 		var newSelected = imgSelected;
 		if (dy < 0) newSelected = newSelected - columns;
@@ -58,7 +58,13 @@ function moveCursor(dx: number, dy: number) {
 		var needUpdate = Math.floor(imgSelected / 8) != Math.floor(newSelected / 8);
 		imgSelected = newSelected;
 		imagePage.innerHTML = Math.ceil((imgSelected + 1) / 8) + "/" + Math.ceil(images.length / 8);
-		if (needUpdate) updateImgTags();
+		if (needUpdate) {
+			setLoading(true);
+			setTimeout(function() {
+				updateImgTags();
+				setLoading(false);
+			}, 250);
+		}
 		for (var ii = 0; ii < imgs.length; ii++) {
 			if (ii === (imgSelected % imgs.length)) imgs[ii].classList.add("selected");
 			else imgs[ii].classList.remove("selected");
@@ -89,7 +95,7 @@ function moveCursor(dx: number, dy: number) {
 }
 
 function clickBlock() {
-	if (waiting) return;
+	if (loading) return;
 	if (!imageChooserDiv.classList.contains("disabled")) {
 		var img = imgs[imgSelected % 8];
 		img.click();
@@ -117,9 +123,9 @@ function clickBlock() {
 		command = prompt("Enter command for button:");
 		if (command === null) return;
 		// Fetch images
-		setOverlay(true);
+		setLoading(true);
 		updateImages({ onOk: function() {
-			setOverlay(false);
+			setLoading(false);
 			// Hydrate image list
 			imgSelected = 0;
 			updateImgTags();
@@ -133,14 +139,14 @@ function clickBlock() {
 			}
 			imageChooserDiv.classList.remove("disabled");
 		}, onNotOk: function(req) {
-			setOverlay(false);
+			setLoading(false);
 			alert("Could not get image list. Status: " + req.status);
 		} });
 	}
 }
 
 function deleteBlock() {
-	if (waiting) return;
+	if (loading) return;
 	if (selected === undefined) {
 		moveCursor(0, 0);
 		return;

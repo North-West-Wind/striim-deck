@@ -7,38 +7,38 @@
 }
 body {
   margin: 0;
-  display: grid;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-  position: relative;
+	background: -webkit-linear-gradient(#d3e8df, #fefefe, #9cb6ac);
+	background: linear-gradient(#d3e8df, #fefefe, #9cb6ac);
+	width: 100vw;
+	height: 100vh;
 }
 .app {
-  max-width: 1280px;
-  margin: 0 auto;
+	position: fixed;
+	left: 50%;
+	-webkit-transform: translateX(-50%);
+	transform: translateX(-50%);
+  margin: auto;
   padding: 2vh;
-  text-align: center;
-  position: relative;
   z-index: 1;
 }
 
 #grid td > div {
-  border: #484848 solid 1vmax;
+  border: #818287 solid 1vmax;
   border-radius: 1vmax;
   width: 20vh;
   height: 20vh;
   padding: 0;
   margin: 2vh;
   aspect-ratio: 1/1;
-  background: -webkit-linear-gradient(#ebebeb, #c4c4c4);
-  background: linear-gradient(#ebebeb, #c4c4c4);
+  background: -webkit-linear-gradient(#f5f2f5, #afacb6, #d9d7de);
+  background: linear-gradient(#f5f2f5, #afacb6, #d9d7de);
 	-webkit-transition: all .25s ease;
   transition: all .25s ease;
   transform-origin: center;
 }
 
 #grid td > div.empty {
-  border: #484848 dotted 1vmax;
+  border: #818287 dotted 1vmax;
   background: transparent;
 	opacity: 0.3;
 }
@@ -55,8 +55,8 @@ body {
 }
 
 #grid td > div.running {
-  background: -webkit-linear-gradient(#c4c4c4, #ebebeb);
-  background: linear-gradient(#c4c4c4, #ebebeb);
+  background: -webkit-linear-gradient(#afacb6, #d9d7de, #afacb6);
+  background: linear-gradient(#afacb6, #d9d7de, #afacb6);
 }
 
 #grid td > div.success {
@@ -84,7 +84,8 @@ body {
   -webkit-transform: translate(-50%, -50%);
   transform: translate(-50%, -50%);
 	background-color: #ffffff;
-	border: #000 solid .5vmax;
+	border: #818287 solid .5vmax;
+	border-radius: 1vmax;
 	width: 50vw;
 	height: 90vh;
 	text-align: center;
@@ -116,20 +117,24 @@ body {
 	border-color: #55ffaa;
 }
 
-#overlay {
+#loading {
 	position: fixed;
-	left: 0;
-	top: 0;
-	width: 100vw;
-	height: 100vh;
-	text-align: center;
-	color: #ffffff;
-	background-color: #000000;
-	opacity: 0.8;
-	-webkit-transition: all .5s ease;
-  transition: all .5s ease;
+	top: 1vmin;
+	right: 1vmin;
+	background-color: #444;
+	color: #fff;
+	border-radius: 1vmax;
+	z-index: 10;
+	opacity: 0.6;
+	-webkit-transition: all .25s ease;
+  transition: all .25s ease;
 	font-size: 5vh;
-	z-index: 1000;
+	padding: 1vmax;
+}
+
+#loading.hidden {
+	opacity: 0;
+	z-index: 0;
 }
 
 div.disabled {
