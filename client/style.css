@@ -141,3 +141,39 @@ div.disabled {
 	display: none;
 	opacity: 0;
 }
+
+#block-page {
+	position: fixed;
+	top: -15vh;
+	left: 0;
+	text-align: center;
+	font-size: 80vh;
+	opacity: 0.1;
+	width: 100vw;
+	height: 100vh;
+	padding: 0;
+}
+
+#button-left {
+	left: 2vw;
+	-webkit-transform: scaleX(-1);
+	transform: scaleX(-1);
+}
+
+#button-right {
+	right: 2vw;
+}
+
+.button-page {
+	position: fixed;
+	top: 36%;
+}
+
+.button-page svg {
+	width: 10vw;
+	height: 10vw;
+}
+
+.button-page.inactive {
+	opacity: 0.5;
+}

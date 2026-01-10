@@ -17,12 +17,36 @@ var command: string | null = null;
 var imageChooserDiv = document.getElementById("image-chooser")!;
 var customImageButton = document.getElementById("custom-image")!;
 var imagePage = document.getElementById("image-page")!;
+var blockPage = document.getElementById("block-page")!;
 var loadingDiv = document.getElementById("loading")!;
+
+var buttonLeft = document.getElementById("button-left")!;
+var buttonRight = document.getElementById("button-right")!;
 
 function setLoading(enabled: boolean) {
 	loading = enabled;
 	if (enabled) loadingDiv.classList.remove("hidden");
 	else loadingDiv.classList.add("hidden");
+}
+
+function updateBlocks() {
+	var page = Math.floor((selected || 0) / (width * height));
+	blockPage.innerHTML = '' + (page + 1);
+	if (page == 0) buttonLeft.classList.add("inactive");
+	else buttonLeft.classList.remove("inactive");
+	for (var ii = 0; ii < cells.length; ii++) {
+		var jj = ii + page * width * height;
+		if (jj === selected) cells[ii].classList.add("selected");
+		else cells[ii].classList.remove("selected");
+
+		if (blocks[jj]) {
+			cells[ii].classList.remove("empty");
+			cells[ii].innerHTML = '<img src="' + blocks[jj]!.img + '">';
+		} else {
+			cells[ii].classList.add("empty");
+			cells[ii].innerHTML = "";
+		}
+	}
 }
 
 function createNewBlock(img: string) {
@@ -33,11 +57,7 @@ function createNewBlock(img: string) {
 		alert("Accepted");
 		var block = JSON.parse(req.response) as GridBlock;
 		blocks[selected!] = block;
-		for (var ii = 0; ii < cells.length; ii++)
-			if (ii === selected) {
-				cells[ii].classList.remove("empty");
-				cells[ii].innerHTML = '<img src="' + block.img + '">';
-			}
+		updateBlocks();
 	}, onNotOk: function(req) {
 		setLoading(false);
 		if (req.status == 403) alert("Rejected");
@@ -74,41 +94,42 @@ function moveCursor(dx: number, dy: number) {
 	if (selected === undefined) selected = 0;
 	else {
 		var newSelected = selected;
-		if (dy < 0) newSelected = newSelected - width;
-		else if (dy > 0) newSelected = newSelected + width;
-		else if (dx < 0) {
-			if (newSelected % width == 0) newSelected = newSelected - 1 + width;
+		if (dy < 0) {
+			newSelected = newSelected - width;
+			if (Math.floor(newSelected / (width * height)) != Math.floor(selected / (width * height)))
+				newSelected += width * height;
+		} else if (dy > 0) {
+			newSelected = newSelected + width;
+			if (Math.floor(newSelected / (width * height)) != Math.floor(selected / (width * height)))
+				newSelected -= width * height;
+		} else if (dx < 0) {
+			if (newSelected % 5 == 0) newSelected -= width * height - 4;
 			else newSelected = newSelected - 1;
 		} else if (dx > 0) {
-			newSelected = newSelected + 1;
-			if (newSelected % width == 0) newSelected -= width;
+			if ((newSelected + 1) % 5 == 0) newSelected += width * height - 4;
+			else newSelected = newSelected + 1;
 		}
-		if (newSelected < width * height) newSelected = width * height + newSelected;
-		newSelected %= width * height;
+		if (newSelected < 0) newSelected = 0;
 		selected = newSelected;
 	}
 
-	for (var ii = 0; ii < cells.length; ii++) {
-		if (ii === selected) cells[ii].classList.add("selected");
-		else cells[ii].classList.remove("selected");
-	}
+	updateBlocks();
 }
 
 function clickBlock() {
 	if (loading) return;
 	if (!imageChooserDiv.classList.contains("disabled")) {
 		var img = imgs[imgSelected % 8];
-		img.click();
+		if (img.ontouchstart) img.ontouchstart({ currentTarget: img } as any);
 		return;
 	}
-	log('' + selected);
 	if (selected === undefined) {
 		moveCursor(0, 0);
 		return;
 	}
 	while (blocks.length <= selected) blocks.push(null);
 	if (blocks[selected]) {
-		var cell = cells[selected];
+		var cell = cells[selected % (width * height)];
 		cell.classList.add("running");
 		fetch(serverUrl("/api/run"), { method: "POST", body: blocks[selected]!.id, onOk: function() {
 			cell.classList.remove("running");
@@ -132,7 +153,7 @@ function clickBlock() {
 			imgs[0].classList.add("selected");
 			imagePage.innerHTML = Math.ceil((imgSelected + 1) / 8) + "/" + Math.ceil(images.length / 8);
 			// Setup custom button logic
-			customImageButton.onclick = function() {
+			customImageButton.ontouchstart = function() {
 				var link = prompt("Enter link to image:");
 				if (link === null) return;
 				createNewBlock(link);
@@ -156,11 +177,7 @@ function deleteBlock() {
 		var copySelected = selected;
 		fetch(serverUrl("/api/delete"), { method: "POST", body: block.id, onOk: function() {
 			blocks[copySelected] = null;
-			for (var ii = 0; ii < cells.length; ii++)
-				if (ii === copySelected) {
-					cells[ii].classList.add("empty");
-					cells[ii].innerHTML = "";
-				}
+			updateBlocks();
 		} });
 	}
 }
@@ -231,8 +248,9 @@ for (var ii = 0; ii < height; ii++) {
 		td.appendChild(div);
 		tr.appendChild(td);
 
-		div.onclick = function(ev) {
-			var index = parseInt((ev.target as HTMLDivElement).getAttribute("index") || "0");
+		div.ontouchstart = function(ev) {
+			if (selected === undefined) selected = 0;
+			var index = parseInt((ev.currentTarget as HTMLDivElement).getAttribute("index") || "0") + Math.floor(selected / (width * height)) * width * height;
 			if (selected !== index) {
 				selected = index;
 				moveCursor(0, 0);
@@ -246,12 +264,25 @@ for (var ii = 0; ii < height; ii++) {
 // Get img references
 for (var ii = 0; ii < 8; ii++) {
 	var img = document.getElementById("i" + ii) as HTMLImageElement;
-	img.onclick = function(ev) {
-		var target = ev.target as HTMLImageElement;
+	img.ontouchstart = function(ev) {
+		var target = ev.currentTarget as HTMLImageElement;
 		if (target.src) createNewBlock(target.src);
 	};
 	imgs.push(img);
 }
+
+// Page buttons
+buttonLeft.ontouchstart = function() {
+	if (selected === undefined) selected = 0;
+	selected -= width * height;
+	if (selected < 0) selected = 0;
+	updateBlocks();
+};
+buttonRight.ontouchstart = function() {
+	if (selected === undefined) selected = 0;
+	selected += width * height;
+	updateBlocks();
+};
 
 // Get initial blocks
 fetch(serverUrl("/api/blocks"), { onOk: function(req) {
@@ -262,7 +293,9 @@ fetch(serverUrl("/api/blocks"), { onOk: function(req) {
 		var block = serverBlocks[key];
 		while (blocks.length < block.index) blocks.push(null);
 		blocks[block.index] = block;
-		cells[block.index].classList.remove("empty");
-		cells[block.index].innerHTML = '<img src="' + block.img + '">';
+		if (block.index < width * height) {
+			cells[block.index].classList.remove("empty");
+			cells[block.index].innerHTML = '<img src="' + block.img + '">';
+		}
 	}
 } });

@@ -2,12 +2,13 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no" />
     <!--link rel="icon" type="image/svg+xml" href="./logo.svg" /-->
     <title>Striim Deck</title>
 		<link rel="stylesheet" href="./style.css">
   </head>
   <body>
+		<div id="block-page">1</div>
 		<div class="app">
 			<table id="grid">
 			</table>
@@ -27,6 +28,31 @@
 			</div>
 			<h2 id="image-page"></h2>
 		</div>
+		<div id="button-left" class="button-page inactive">
+			<svg version="1.1" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xlink="http://www.w3.org/1999/xlink">
+				<defs>
+					<linearGradient id="linearGradient3" x1="256" x2="256" y1="250.67" y2="1024" gradientTransform="matrix(.9 0 0 .9 51.2 51.2)" gradientUnits="userSpaceOnUse">
+						<stop stop-color="#f5f2f5" offset="0"/>
+						<stop stop-color="#afacb6" offset=".5"/>
+						<stop stop-color="#d9d7de" offset="1"/>
+					</linearGradient>
+				</defs>
+				<path d="m281.6 51.2 460.8 460.8-460.8 460.8z" fill="url(#linearGradient3)" stroke="#818287" stroke-linejoin="round" stroke-width="40" style="paint-order:fill markers stroke"/>
+			</svg>
+		</div>
+		<div id="button-right" class="button-page">
+			<svg version="1.1" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xlink="http://www.w3.org/1999/xlink">
+				<defs>
+					<linearGradient id="linearGradient3" x1="256" x2="256" y1="250.67" y2="1024" gradientTransform="matrix(.9 0 0 .9 51.2 51.2)" gradientUnits="userSpaceOnUse">
+						<stop stop-color="#f5f2f5" offset="0"/>
+						<stop stop-color="#afacb6" offset=".5"/>
+						<stop stop-color="#d9d7de" offset="1"/>
+					</linearGradient>
+				</defs>
+				<path d="m281.6 51.2 460.8 460.8-460.8 460.8z" fill="url(#linearGradient3)" stroke="#818287" stroke-linejoin="round" stroke-width="40" style="paint-order:fill markers stroke"/>
+			</svg>
+		</div>
+		<div id="button-right"></div>
 		<div id="loading" class="hidden">Loading...</div>
     <script src="./network.js"></script>
     <script src="./wiiu.js"></script>

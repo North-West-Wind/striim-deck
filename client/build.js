@@ -18,7 +18,7 @@ content = content.replaceAll(/.*require.*/gm, "");
 fs.writeFileSync("dist/index.html", content);
 
 // Transform CSS
-const unitRegex = /((?:(?:\d+)?\.)?\d+)v(w|h|min|max)/;
+const unitRegex = /(-?(?:(?:\d+)?\.)?\d+)v(w|h|min|max)/;
 const WIDTH = 854;
 const HEIGHT = 448;
 content = fs.readFileSync("style.css", "utf8");
