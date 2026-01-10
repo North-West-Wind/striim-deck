@@ -120,6 +120,7 @@ func newBlock(w http.ResponseWriter, r *http.Request) {
 	var ans string
 	fmt.Scan(&ans)
 	if strings.TrimSpace(strings.ToLower(ans)) == "y" {
+		log.Println("Accepted")
 		id, err := uuid.NewRandom()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -146,6 +147,7 @@ func newBlock(w http.ResponseWriter, r *http.Request) {
 		w.Write(data)
 		SaveConfig()
 	} else {
+		log.Println("Rejected")
 		w.WriteHeader(http.StatusForbidden)
 		w.Write([]byte("403 Forbidden"))
 	}

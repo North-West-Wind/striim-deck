@@ -5,17 +5,18 @@ type GridBlock = {
 	img: string;
 }
 
-var width = 5, height = 3, columns = 4;
+var width = 5, height = 3, columns = 4, rows = 2;
 var selected: number | undefined = undefined;
 var imgSelected = 0;
 var blocks: (GridBlock | null)[] = [];
 var cells: HTMLDivElement[] = [];
-var imageList: HTMLImageElement[] = [];
+var imgs: HTMLImageElement[] = [];
 var waiting = false;
+var command: string | null = null;
 
 var imageChooserDiv = document.getElementById("image-chooser")!;
-var imageListDiv = document.getElementById("image-list")!;
 var customImageButton = document.getElementById("custom-image")!;
+var imagePage = document.getElementById("image-page")!;
 var overlayDiv = document.getElementById("overlay")!;
 
 function setOverlay(enabled: boolean) {
@@ -24,11 +25,10 @@ function setOverlay(enabled: boolean) {
 	else overlayDiv.classList.add("disabled");
 }
 
-function createNewBlock(cmd: string, img: string) {
+function createNewBlock(img: string) {
 	setOverlay(true);
 	imageChooserDiv.classList.add("disabled");
-	imageListDiv.innerHTML = "";
-	fetch(serverUrl("/api/new"), { method: "POST", body: JSON.stringify({ index: selected, cmd: cmd, img: img }), onOk: function(req) {
+	fetch(serverUrl("/api/new"), { method: "POST", body: JSON.stringify({ index: selected, cmd: command, img: img }), onOk: function(req) {
 		setOverlay(false);
 		alert("Accepted");
 		var block = JSON.parse(req.response) as GridBlock;
@@ -51,21 +51,17 @@ function moveCursor(dx: number, dy: number) {
 		var newSelected = imgSelected;
 		if (dy < 0) newSelected = newSelected - columns;
 		else if (dy > 0) newSelected = newSelected + columns;
-		else if (dx < 0) {
-			if (newSelected % columns == 0) newSelected = newSelected - 1 + columns;
-			else newSelected = newSelected - 1;
-		} else if (dx > 0) {
-			newSelected = newSelected + 1;
-			if (newSelected % columns == 0) newSelected -= columns;
-		}
-		if (newSelected < imageList.length) newSelected = imageList.length + newSelected;
-		newSelected %= imageList.length;
+		else if (dx < 0) newSelected = newSelected - 1;
+		else if (dx > 0) newSelected = newSelected + 1;
+		if (newSelected < imgSelected) newSelected = images.length + newSelected;
+		newSelected %= images.length;
+		var needUpdate = Math.floor(imgSelected / 8) != Math.floor(newSelected / 8);
 		imgSelected = newSelected;
-		for (var ii = 0; ii < imageList.length; ii++) {
-			if (ii === imgSelected) {
-				imageList[ii].classList.add("selected");
-				imageList[ii].scrollIntoView();
-			} else imageList[ii].classList.remove("selected");
+		imagePage.innerHTML = Math.ceil((imgSelected + 1) / 8) + "/" + Math.ceil(images.length / 8);
+		if (needUpdate) updateImgTags();
+		for (var ii = 0; ii < imgs.length; ii++) {
+			if (ii === (imgSelected % imgs.length)) imgs[ii].classList.add("selected");
+			else imgs[ii].classList.remove("selected");
 		}
 		return;
 	}
@@ -95,8 +91,8 @@ function moveCursor(dx: number, dy: number) {
 function clickBlock() {
 	if (waiting) return;
 	if (!imageChooserDiv.classList.contains("disabled")) {
-		var img = imageList[imgSelected];
-		if (img && img.onclick) img.onclick(new PointerEvent("click"));
+		var img = imgs[imgSelected % 8];
+		img.click();
 		return;
 	}
 	if (selected === undefined) {
@@ -112,40 +108,31 @@ function clickBlock() {
 			cell.classList.add("success");
 			setTimeout(function() { cell.classList.remove("success"); }, 3000);
 		}, onNotOk: function() {
-			log("not ok");
 			cell.classList.remove("running");
 			cell.classList.add("failure");
 			setTimeout(function() { cell.classList.remove("failure"); }, 3000);
 		} });
 	} else {
-		var command = prompt("Enter command for button:");
+		command = prompt("Enter command for button:");
 		if (command === null) return;
 		// Fetch images
 		setOverlay(true);
-		fetch(serverUrl("/api/images"), { onOk: function(req) {
+		updateImages({ onOk: function() {
 			setOverlay(false);
 			// Hydrate image list
 			imgSelected = 0;
-			var split = req.responseText.split("\n");
-			for (var ii = 0; ii < split.length; ii++) {
-				if (!split[ii].trim()) continue;
-				var img = document.createElement("img");
-				if (ii == 0) img.className = "selected";
-				img.src = "/api/images/" + split[ii];
-				img.onclick = function() {
-					createNewBlock(command!, img.src);
-				}
-				imageList.push(img);
-				imageListDiv.appendChild(img);
-			}
+			updateImgTags();
+			imgs[0].classList.add("selected");
+			imagePage.innerHTML = Math.ceil((imgSelected + 1) / 8) + "/" + Math.ceil(images.length / 8);
 			// Setup custom button logic
 			customImageButton.onclick = function() {
 				var link = prompt("Enter link to image:");
 				if (link === null) return;
-				createNewBlock(command!, link);
+				createNewBlock(link);
 			}
 			imageChooserDiv.classList.remove("disabled");
 		}, onNotOk: function(req) {
+			setOverlay(false);
 			alert("Could not get image list. Status: " + req.status);
 		} });
 	}
@@ -168,6 +155,15 @@ function deleteBlock() {
 					cells[ii].innerHTML = "";
 				}
 		} });
+	}
+}
+
+function updateImgTags() {
+	var page = Math.floor(imgSelected / 8);
+	for (var ii = 0; ii < 8; ii++) {
+		var index = page * 8 + ii;
+		if (index < images.length) imgs[ii].src = "/api/images/" + images[index];
+		else imgs[ii].src = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs%3D";
 	}
 }
 
@@ -213,6 +209,7 @@ window.addEventListener("buttondown", function(event: CustomEvent<keyof typeof W
 	else if (button == "B") deleteBlock();
 } as any);
 
+// Create table
 var table = document.getElementById("grid")!;
 for (var ii = 0; ii < height; ii++) {
 	var tr = document.createElement("tr");
@@ -235,10 +232,21 @@ for (var ii = 0; ii < height; ii++) {
 			if (selected !== index) {
 				selected = index;
 				moveCursor(0, 0);
-			} else clickBlock();
+			}
+			clickBlock();
 		};
 	}
 	table.appendChild(tr);
+}
+
+// Get img references
+for (var ii = 0; ii < 8; ii++) {
+	var img = document.getElementById("i" + ii) as HTMLImageElement;
+	img.onclick = function(ev) {
+		var target = ev.target as HTMLImageElement;
+		if (target.src) createNewBlock(target.src);
+	};
+	imgs.push(img);
 }
 
 // Get initial blocks
