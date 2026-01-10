@@ -95,6 +95,7 @@ function clickBlock() {
 		img.click();
 		return;
 	}
+	log('' + selected);
 	if (selected === undefined) {
 		moveCursor(0, 0);
 		return;
@@ -168,33 +169,30 @@ function updateImgTags() {
 }
 
 window.addEventListener("keydown", function(event) {
-	if (selected === undefined) selected = 0;
-	else {
-		switch (event.key) {
-			case "ArrowUp": {
-				moveCursor(0, -1);
-				break;
-			}
-			case "ArrowDown": {
-				moveCursor(0, 1);
-				break;
-			}
-			case "ArrowLeft": {
-				moveCursor(-1, 0);
-				break;
-			}
-			case "ArrowRight": {
-				moveCursor(1, 0);
-				break;
-			}
-			case "Enter": {
-				clickBlock();
-				break;
-			}
-			case "Delete": {
-				deleteBlock();
-				break;
-			}
+	switch (event.key) {
+		case "ArrowUp": {
+			moveCursor(0, -1);
+			break;
+		}
+		case "ArrowDown": {
+			moveCursor(0, 1);
+			break;
+		}
+		case "ArrowLeft": {
+			moveCursor(-1, 0);
+			break;
+		}
+		case "ArrowRight": {
+			moveCursor(1, 0);
+			break;
+		}
+		case "Enter": {
+			clickBlock();
+			break;
+		}
+		case "Delete": {
+			deleteBlock();
+			break;
 		}
 	}
 });
