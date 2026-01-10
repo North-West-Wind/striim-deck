@@ -5,12 +5,17 @@ type GridBlock = {
 	img: string;
 }
 
-var width = 5, height = 3;
+var width = 5, height = 3, columns = 4;
 var selected: number | undefined = undefined;
+var imgSelected = 0;
 var blocks: (GridBlock | null)[] = [];
 var cells: HTMLDivElement[] = [];
+var imageList: HTMLImageElement[] = [];
 var waiting = false;
 
+var imageChooserDiv = document.getElementById("image-chooser")!;
+var imageListDiv = document.getElementById("image-list")!;
+var customImageButton = document.getElementById("custom-image")!;
 var overlayDiv = document.getElementById("overlay")!;
 
 function setOverlay(enabled: boolean) {
@@ -19,8 +24,51 @@ function setOverlay(enabled: boolean) {
 	else overlayDiv.classList.add("disabled");
 }
 
+function createNewBlock(cmd: string, img: string) {
+	setOverlay(true);
+	imageChooserDiv.classList.add("disabled");
+	imageListDiv.innerHTML = "";
+	fetch("http://192.168.2.240:8000/api/new", { method: "POST", body: JSON.stringify({ index: selected, cmd: cmd, img: img }), onOk: function(req) {
+		setOverlay(false);
+		alert("Accepted");
+		var block = JSON.parse(req.response) as GridBlock;
+		blocks[selected!] = block;
+		for (var ii = 0; ii < cells.length; ii++)
+			if (ii === selected) {
+				cells[ii].classList.remove("empty");
+				cells[ii].innerHTML = '<img src="' + block.img + '">';
+			}
+	}, onNotOk: function(req) {
+		setOverlay(false);
+		if (req.status == 403) alert("Rejected");
+		else alert("Error " + req.status);
+	} });
+}
+
 function moveCursor(dx: number, dy: number) {
 	if (waiting) return;
+	if (!imageChooserDiv.classList.contains("disabled")) {
+		var newSelected = imgSelected;
+		if (dy < 0) newSelected = newSelected - columns;
+		else if (dy > 0) newSelected = newSelected + columns;
+		else if (dx < 0) {
+			if (newSelected % columns == 0) newSelected = newSelected - 1 + columns;
+			else newSelected = newSelected - 1;
+		} else if (dx > 0) {
+			newSelected = newSelected + 1;
+			if (newSelected % columns == 0) newSelected -= columns;
+		}
+		if (newSelected < imageList.length) newSelected = imageList.length + newSelected;
+		newSelected %= imageList.length;
+		imgSelected = newSelected;
+		for (var ii = 0; ii < imageList.length; ii++) {
+			if (ii === imgSelected) {
+				imageList[ii].classList.add("selected");
+				imageList[ii].scrollIntoView();
+			} else imageList[ii].classList.remove("selected");
+		}
+		return;
+	}
 	if (selected === undefined) selected = 0;
 	else {
 		var newSelected = selected;
@@ -46,6 +94,11 @@ function moveCursor(dx: number, dy: number) {
 
 function clickBlock() {
 	if (waiting) return;
+	if (!imageChooserDiv.classList.contains("disabled")) {
+		var img = imageList[imgSelected];
+		if (img && img.onclick) img.onclick(new PointerEvent("click"));
+		return;
+	}
 	if (selected === undefined) {
 		moveCursor(0, 0);
 		return;
@@ -56,19 +109,33 @@ function clickBlock() {
 	} else {
 		var command = prompt("Enter command for button:");
 		if (command === null) return;
+		// Fetch images
 		setOverlay(true);
-		fetch("http://192.168.2.240:8000/api/new", { method: "POST", body: JSON.stringify({ index: selected, cmd: command }), callback: function(req) {
-			if (req.readyState == 4) {
-				setOverlay(false);
-				if (req.status == 200) {
-					alert("Accepted");
-					blocks[selected!] = req.response;
-					for (var ii = 0; ii < cells.length; ii++) {
-						if (ii === selected) cells[ii].classList.remove("empty");
-					}
-				} else if (req.status == 403) alert("Rejected");
-				else alert("Error " + req.status);
+		fetch("http://192.168.2.240:8000/api/images", { onOk: function(req) {
+			setOverlay(false);
+			// Hydrate image list
+			imgSelected = 0;
+			var split = req.responseText.split("\n");
+			for (var ii = 0; ii < split.length; ii++) {
+				if (!split[ii].trim()) continue;
+				var img = document.createElement("img");
+				if (ii == 0) img.className = "selected";
+				img.src = "/api/images/" + split[ii];
+				img.onclick = function() {
+					createNewBlock(command!, img.src);
+				}
+				imageList.push(img);
+				imageListDiv.appendChild(img);
 			}
+			// Setup custom button logic
+			customImageButton.onclick = function() {
+				var link = prompt("Enter link to image:");
+				if (link === null) return;
+				createNewBlock(command!, link);
+			}
+			imageChooserDiv.classList.remove("disabled");
+		}, onNotOk: function(req) {
+			alert("Could not get image list. Status: " + req.status);
 		} });
 	}
 }
@@ -88,7 +155,6 @@ function deleteBlock() {
 }
 
 window.addEventListener("keydown", function(event) {
-	if (!["ArrowUp", "ArrowLeft", "ArrowRight", "ArrowDown", "Enter"].includes(event.key)) return;
 	if (selected === undefined) selected = 0;
 	else {
 		switch (event.key) {
@@ -147,3 +213,17 @@ for (var ii = 0; ii < height; ii++) {
 	}
 	table.appendChild(tr);
 }
+
+// Get initial blocks
+fetch("http://192.168.2.240:8000/api/blocks", { onOk: function(req) {
+	var serverBlocks = JSON.parse(req.response) as ({ [key: string]: GridBlock & { index: number } });
+	var keys = Object.keys(serverBlocks);
+	for (var ii = 0; ii < keys.length; ii++) {
+		var key = keys[ii];
+		var block = serverBlocks[key];
+		while (blocks.length < block.index) blocks.push(null);
+		blocks[block.index] = block;
+		cells[block.index].classList.remove("empty");
+		cells[block.index].innerHTML = '<img src="' + block.img + '">';
+	}
+} });

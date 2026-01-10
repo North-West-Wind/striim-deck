@@ -24,7 +24,7 @@ const HEIGHT = 448;
 content = fs.readFileSync("style.css", "utf8");
 matches = content.match(unitRegex);
 while (matches) {
-	let value = matches[1];
+	let value = Number(matches[1]);
 	const unit = matches[2];
 	switch (unit) {
 		case "max":

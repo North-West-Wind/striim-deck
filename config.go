@@ -16,10 +16,11 @@ type Block struct {
 }
 
 type Config struct {
-	Blocks []Block `json:"blocks"`
+	Blocks map[string]*Block `json:"blocks"`
 }
 
 func LoadConfig() {
+	config = &Config{}
 	if _, err := os.Stat(configPath); err == nil {
 		// config exists
 		file, err := os.Open(configPath)
@@ -36,8 +37,7 @@ func LoadConfig() {
 		if err != nil {
 			log.Fatalln(err)
 		}
-	} else {
-		config = &Config{}
+		log.Printf("Loaded config. Found %d block(s)", len(config.Blocks))
 	}
 }
 
@@ -47,7 +47,7 @@ func SaveConfig() {
 		log.Println(err)
 		return
 	}
-	err = os.MkdirAll(path.Dir(configPath), 0644)
+	err = os.MkdirAll(path.Dir(configPath), 0755)
 	if err != nil {
 		log.Println("mkdir failed")
 		log.Println(err)

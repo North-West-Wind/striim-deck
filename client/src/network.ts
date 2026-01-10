@@ -1,10 +1,13 @@
-function fetch(url: string, options?: { method?: string, body?: string, contentType?: string, callback?: (req: XMLHttpRequest) => void }) {
+function fetch(url: string, options?: { method?: string, body?: string, contentType?: string, onOk?: (req: XMLHttpRequest) => void, onNotOk?: (req: XMLHttpRequest) => void }) {
 	var req = new XMLHttpRequest();
 	if (options && options.method) req.open(options.method, url, true);
 	else req.open("GET", url, true);
 	req.onreadystatechange = function() {
-		if (options && options.callback)
-			options.callback(req);
+		if (req.readyState == 4) {
+			if (req.status >= 200 && req.status < 300)
+				if (options && options.onOk) options.onOk(req);
+			else if (options && options.onNotOk) options.onNotOk(req);
+		}
 	};
 	if (options && options.body) {
 		if (options.contentType) req.setRequestHeader("Content-type", options.contentType);
