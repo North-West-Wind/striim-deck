@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/adrg/xdg"
@@ -20,6 +21,7 @@ var (
 	config     *Config
 	configPath string
 	imageDir   string
+	scriptDir  string
 	port       int
 )
 
@@ -33,9 +35,27 @@ func init() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+	scriptDir, err = xdg.ConfigFile("striim-deck/scripts")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	scriptDir, err = filepath.Abs(scriptDir)
+	if err != nil {
+		log.Fatalln(err)
+	}
 	if entries, err := os.ReadDir(imageDir); err != nil || len(entries) == 0 {
 		log.Printf("%s is empty. You should put images there!", imageDir)
 		os.MkdirAll(imageDir, 0755)
+	}
+	if entries, err := os.ReadDir(scriptDir); err != nil || len(entries) == 0 {
+		log.Printf("%s is empty. You should put scripts there!", scriptDir)
+		os.MkdirAll(scriptDir, 0755)
+	}
+	pathEnv, _ := os.LookupEnv("PATH")
+	if pathEnv == "" {
+		os.Setenv("PATH", scriptDir)
+	} else {
+		os.Setenv("PATH", pathEnv+":"+scriptDir)
 	}
 	flag.StringVar(&configPath, "config", configPath, "Config file path")
 	flag.IntVar(&port, "port", 8000, "Port of the HTTP server")
