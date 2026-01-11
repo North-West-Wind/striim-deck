@@ -12,6 +12,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/widget"
 	"github.com/adrg/xdg"
 	"github.com/google/uuid"
 	shellwords "github.com/mattn/go-shellwords"
@@ -23,6 +27,7 @@ var (
 	imageDir   string
 	scriptDir  string
 	port       int
+	window     fyne.Window
 )
 
 func init() {
@@ -64,6 +69,16 @@ func init() {
 func main() {
 	LoadConfig()
 
+	go httpServer()
+
+	a := app.New()
+	window = a.NewWindow("Confirmation")
+	window.SetFixedSize(true)
+
+	a.Run()
+}
+
+func httpServer() {
 	router := http.NewServeMux()
 
 	router.HandleFunc("GET /wiiu/", serveWiiU)
@@ -135,12 +150,28 @@ func newBlock(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("500 Internal Server Error"))
 		return
 	}
-	fmt.Println("A client has requested adding the following command:")
-	fmt.Println(body.Cmd)
-	fmt.Print("Accept? [y/n] ")
-	var ans string
-	fmt.Scan(&ans)
-	if strings.TrimSpace(strings.ToLower(ans)) == "y" {
+	result := make(chan bool)
+	fyne.Do(func() {
+		window.SetCloseIntercept(func() {
+			window.Close()
+			result <- false
+		})
+		window.SetContent(container.NewVBox(
+			widget.NewLabel("A client has requested adding the following command:"),
+			widget.NewLabel(body.Cmd),
+			widget.NewButton("Accept", func() {
+				window.Hide()
+				result <- true
+			}),
+			widget.NewButton("Reject", func() {
+				window.Hide()
+				result <- false
+			}),
+		))
+		window.Show()
+	})
+	ans := <-result
+	if ans {
 		log.Println("Accepted")
 		id, err := uuid.NewRandom()
 		if err != nil {
@@ -172,6 +203,7 @@ func newBlock(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusForbidden)
 		w.Write([]byte("403 Forbidden"))
 	}
+
 }
 
 func deleteBlock(w http.ResponseWriter, r *http.Request) {
