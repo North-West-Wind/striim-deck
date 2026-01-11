@@ -41,6 +41,7 @@ class Cell {
 				this.moved = false;
 				for (const cell of state.cells)
 					if (cell.isHovering(touch.clientX, touch.clientY)) {
+						blockManager.selected = cell.index;
 						blockManager.swapBlock(this.index, cell.index);
 						break;
 					}
