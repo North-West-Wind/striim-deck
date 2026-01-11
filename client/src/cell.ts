@@ -42,12 +42,36 @@ class Cell {
 				div.style.transform = div.style.webkitTransform = "";
 				div.classList.remove("moving");
 				this.moved = false;
+				const currentPage = Math.floor((blockManager.selected || 0) / blockManager.area());
 				for (const cell of state.cells)
 					if (cell.isHovering(touch.clientX, touch.clientY)) {
-						blockManager.selected = cell.index;
-						blockManager.swapBlock(this.index, cell.index);
-						break;
+						blockManager.selected = cell.index + currentPage * blockManager.area();
+						blockManager.swapBlock(this.index + currentPage * blockManager.area(), cell.index + currentPage * blockManager.area());
+						return;
 					}
+				const buttonHover = state.isHovering(touch.clientX, touch.clientY);
+				if (buttonHover < 0 && currentPage > 0)
+					for (let ii = currentPage * blockManager.area() - 1; ii >= 0; ii--) {
+						if (!blockManager.blocks[ii]) {
+							blockManager.selected = ii;
+							blockManager.swapBlock(this.index + currentPage * blockManager.area(), ii);
+							break;
+						}
+					}
+				else if (buttonHover > 0) {
+					for (let ii = (currentPage + 1) * blockManager.area(); ii < blockManager.blocks.length; ii++) {
+						if (!blockManager.blocks[ii]) {
+							blockManager.selected = ii;
+							blockManager.swapBlock(this.index + currentPage * blockManager.area(), ii);
+							return;
+						}
+					}
+					let newIndex: number;
+					if (Math.floor(blockManager.blocks.length / blockManager.area()) == currentPage) newIndex = (currentPage + 1) * blockManager.area();
+					else newIndex = blockManager.blocks.length;
+					blockManager.selected = newIndex;
+					blockManager.swapBlock(this.index + currentPage * blockManager.area(), newIndex);
+				}
 			}
 		};
 	}

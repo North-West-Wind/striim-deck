@@ -184,7 +184,7 @@ div.disabled {
 }
 
 .button-page.inactive {
-	opacity: 0.5;
+	opacity: 0.2;
 }
 
 #button-mode {

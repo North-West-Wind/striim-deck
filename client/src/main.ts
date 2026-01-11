@@ -3,9 +3,6 @@ type GridBlock = {
 	img: string;
 }
 
-const buttonLeft = document.getElementById("button-left")!;
-const buttonRight = document.getElementById("button-right")!;
-
 window.addEventListener("keydown", function(event) {
 	switch (event.key) {
 		case "ArrowUp": {
@@ -58,19 +55,6 @@ for (let ii = 0; ii < blockManager.height; ii++) {
 }
 for (const cell of state.cells)
 	cell.updateRect();
-
-// Page buttons
-buttonLeft.ontouchstart = function() {
-	if (blockManager.selected === undefined) blockManager.selected = 0;
-	blockManager.selected -= blockManager.width * blockManager.height;
-	if (blockManager.selected < 0) blockManager.selected = 0;
-	state.updateCells();
-};
-buttonRight.ontouchstart = function() {
-	if (blockManager.selected === undefined) blockManager.selected = 0;
-	blockManager.selected += blockManager.width * blockManager.height;
-	state.updateCells();
-};
 
 // Get initial blocks
 fetch(serverUrl("/api/blocks"), { onOk: function(req) {
