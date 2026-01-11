@@ -15,7 +15,7 @@ class Cell {
 
 		this.div.ontouchstart = function() {
 			if (blockManager.selected === undefined) blockManager.selected = 0;
-			var blockIndex = index + Math.floor(blockManager.selected / blockManager.area()) * blockManager.area();
+			const blockIndex = index + Math.floor(blockManager.selected / blockManager.area()) * blockManager.area();
 			if (blockManager.selected !== blockIndex) {
 				blockManager.selected = blockIndex;
 				state.moveCursor(0, 0);
@@ -25,7 +25,7 @@ class Cell {
 	}
 
 	addToRow(row: HTMLTableRowElement) {
-		var td = document.createElement("td");
+		const td = document.createElement("td");
 		td.appendChild(this.div);
 		row.appendChild(td);
 	}
@@ -49,7 +49,7 @@ class Cell {
 		if (this.running || !this.blockRef) return;
 		this.running = true;
 		this.div.classList.add("running");
-		var handleRunResult = this.handleRunResult.bind(this);
+		const handleRunResult = this.handleRunResult.bind(this);
 		fetch(serverUrl("/api/run"), { method: "POST", body: this.blockRef.id, onOk: function() {
 			handleRunResult(true);
 		}, onNotOk: function() {
@@ -63,7 +63,7 @@ class Cell {
 		if (success) this.div.classList.add("success");
 		else this.div.classList.add("failure");
 		if (this.classResetTimer) clearTimeout(this.classResetTimer);
-		var classList = this.div.classList;
+		const classList = this.div.classList;
 		this.classResetTimer = setTimeout(function() {
 			classList.remove("success");
 			classList.remove("failure");

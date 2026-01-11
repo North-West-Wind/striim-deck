@@ -46,23 +46,19 @@ class BlockManager {
 			return;
 		}
 		while (this.blocks.length <= this.selected) this.blocks.push(null);
-		if (this.blocks[this.selected]) {
-			var cell = state.cells[this.selected % this.area()];
-			cell.run();
-		} else {
+		if (this.blocks[this.selected]) state.cells[this.selected % this.area()].run();
+		else {
 			this.command = prompt("Enter command for button:");
 			if (this.command === null) return;
 			// Fetch images
 			state.setLoading(true);
 			imageChooser.on("update:failure", function(ev) {
-				log("seen fail");
 				state.setLoading(false);
 				alert("Could not get image list. Status: " + (ev as CustomEvent<XMLHttpRequest>).detail.status);
 				imageChooser.endFlow();
 			});
 			var createBlock = this.createBlock.bind(this);
 			imageChooser.on("chosen", function(ev) {
-				log("seen chosen");
 				state.setLoading(false);
 				createBlock((ev as CustomEvent<string>).detail);
 				imageChooser.endFlow();
@@ -72,15 +68,14 @@ class BlockManager {
 	}
 
 	createBlock(img: string) {
-		var realThis = this;
+		const realThis = this;
 		state.setLoading(true);
 		imageChooser.imageChooserDiv.classList.add("disabled");
 		imageChooser.active = false;
 		fetch(serverUrl("/api/new"), { method: "POST", body: JSON.stringify({ index: this.selected, cmd: this.command, img: img }), onOk: function(req) {
 			state.setLoading(false);
 			alert("Accepted");
-			var block = JSON.parse(req.response) as GridBlock;
-			realThis.blocks[realThis.selected!] = block;
+			realThis.blocks[realThis.selected!] = JSON.parse(req.response) as GridBlock;
 			state.updateCells();
 		}, onNotOk: function(req) {
 			state.setLoading(false);
@@ -96,10 +91,9 @@ class BlockManager {
 			return;
 		}
 		if (confirm("Are you sure you want to delete " + this.selected + "?")) {
-			var block = this.blocks[this.selected]!;
-			var copySelected = this.selected;
-			var commitDeleteBlock = this.commitDeleteBlock.bind(this);
-			fetch(serverUrl("/api/delete"), { method: "POST", body: block.id, onOk: function() {
+			const copySelected = this.selected;
+			const commitDeleteBlock = this.commitDeleteBlock.bind(this);
+			fetch(serverUrl("/api/delete"), { method: "POST", body: this.blocks[this.selected]!.id, onOk: function() {
 				commitDeleteBlock(copySelected);
 				state.updateCells();
 			} });

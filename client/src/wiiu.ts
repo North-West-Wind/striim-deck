@@ -38,9 +38,8 @@ window.addEventListener("load", function() {
 		setInterval(function() {
 			previousHold = window.wiiu.gamepad.hold;
 			window.wiiu.gamepad.update();
-			var keys = Object.keys(WiiUButton);
-			for (var ii = 0; ii < keys.length; ii++) {
-				var button = keys[ii] as keyof typeof WiiUButton;
+			for (const key in WiiUButton) {
+				const button = key as keyof typeof WiiUButton;
 				if (!isHeld(button, previousHold) && isHeld(button, window.wiiu.gamepad.hold)) window.dispatchEvent(new CustomEvent("buttondown", { detail: button }));
 				else if (isHeld(button, previousHold) && isHeld(button, window.wiiu.gamepad.hold)) window.dispatchEvent(new CustomEvent("buttonhold", { detail: button }));
 				else if (isHeld(button, previousHold) && !isHeld(button, window.wiiu.gamepad.hold)) window.dispatchEvent(new CustomEvent("buttonup", { detail: button }));

@@ -16,12 +16,12 @@ class State {
 	}
 
 	updateCells() {
-		var page = Math.floor((blockManager.selected || 0) / blockManager.area());
+		const page = Math.floor((blockManager.selected || 0) / blockManager.area());
 		this.blockPage.innerHTML = '' + (page + 1);
 		if (page == 0) buttonLeft.classList.add("inactive");
 		else buttonLeft.classList.remove("inactive");
-		for (var ii = 0; ii < this.cells.length; ii++) {
-			var jj = ii + page * blockManager.area();
+		for (let ii = 0; ii < this.cells.length; ii++) {
+			const jj = ii + page * blockManager.area();
 			this.cells[ii].update(jj === blockManager.selected, blockManager.blocks[jj]);
 		}
 	}

@@ -25,10 +25,10 @@ class ImageChooser {
 	}
 
 	updateImages() {
-		var eventTarget = this.eventTarget;
+		const eventTarget = this.eventTarget;
 		fetch(serverUrl("/api/images"), { method: "GET", onOk: function(req) {
-			var newImages: string[] = [];
-			var split = req.responseText.split("\n");
+			const newImages: string[] = [];
+			const split = req.responseText.split("\n");
 			for (var ii = 0; ii < split.length; ii++) {
 				if (!split[ii].trim()) continue;
 				newImages.push(split[ii]);
@@ -41,9 +41,9 @@ class ImageChooser {
 	}
 
 	updateTags() {
-		var page = Math.floor(this.selected / 8);
+		const page = Math.floor(this.selected / 8);
 		for (var ii = 0; ii < 8; ii++) {
-			var index = page * 8 + ii;
+			const index = page * 8 + ii;
 			if (index < images.length) this.imgs[ii].src = "/api/images/" + images[index];
 			else this.imgs[ii].src = "data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs%3D";
 		}
@@ -57,25 +57,25 @@ class ImageChooser {
 		else if (dx > 0) newSelected = newSelected + 1;
 		if (newSelected < this.selected) newSelected = this.images.length + newSelected;
 		newSelected %= images.length;
-		var needUpdate = Math.floor(this.selected / 8) != Math.floor(newSelected / 8);
+		const needUpdate = Math.floor(this.selected / 8) != Math.floor(newSelected / 8);
 		this.selected = newSelected;
 		this.imagePage.innerHTML = Math.ceil((this.selected + 1) / 8) + "/" + Math.ceil(images.length / 8);
 		if (needUpdate) {
 			state.setLoading(true);
-			var updateTags = this.updateTags.bind(this);
+			const updateTags = this.updateTags.bind(this);
 			setTimeout(function() {
 				updateTags();
 				state.setLoading(false);
 			}, 250);
 		}
-		for (var ii = 0; ii < this.imgs.length; ii++) {
+		for (let ii = 0; ii < this.imgs.length; ii++) {
 			if (ii === (this.selected % this.imgs.length)) this.imgs[ii].classList.add("selected");
 			else this.imgs[ii].classList.remove("selected");
 		}
 	}
 
 	startFlow() {
-		var realThis = this;
+		const realThis = this;
 		// Fetch images
 		state.setLoading(true);
 		this.on("update:success", function() {
@@ -88,7 +88,7 @@ class ImageChooser {
 			realThis.imagePage.innerHTML = Math.ceil((realThis.selected + 1) / 8) + "/" + Math.ceil(images.length / 8);
 			// Setup custom button logic
 			realThis.customImageButton.ontouchstart = function() {
-				var link = prompt("Enter link to image:");
+				const link = prompt("Enter link to image:");
 				if (link === null) return;
 				realThis.eventTarget.dispatchEvent(new CustomEvent("chosen", { detail: link }));
 			}
@@ -110,7 +110,7 @@ class ImageChooser {
 	}
 
 	clickImage() {
-		var img = this.imgs[this.selected % 8];
+		const img = this.imgs[this.selected % 8];
 		if (img.ontouchstart) img.ontouchstart({ currentTarget: img } as any);
 	}
 

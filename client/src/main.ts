@@ -3,8 +3,8 @@ type GridBlock = {
 	img: string;
 }
 
-var buttonLeft = document.getElementById("button-left")!;
-var buttonRight = document.getElementById("button-right")!;
+const buttonLeft = document.getElementById("button-left")!;
+const buttonRight = document.getElementById("button-right")!;
 
 window.addEventListener("keydown", function(event) {
 	switch (event.key) {
@@ -36,7 +36,7 @@ window.addEventListener("keydown", function(event) {
 });
 
 window.addEventListener("buttondown", function(event: CustomEvent<keyof typeof WiiUButton>) {
-	var button = event.detail;
+	const button = event.detail;
 	if (button == "LUP" || button == "RUP" || button == "DUP") state.moveCursor(0, -1);
 	else if (button == "LDOWN" || button == "RDOWN" || button == "DDOWN") state.moveCursor(0, 1);
 	else if (button == "LLEFT" || button == "RLEFT" || button == "DLEFT") state.moveCursor(-1, 0);
@@ -46,11 +46,11 @@ window.addEventListener("buttondown", function(event: CustomEvent<keyof typeof W
 } as any);
 
 // Create table
-var table = document.getElementById("grid")!;
-for (var ii = 0; ii < blockManager.height; ii++) {
-	var tr = document.createElement("tr");
-	for (var jj = 0; jj < blockManager.width; jj++) {
-		var cell = new Cell(ii * blockManager.width + jj);
+const table = document.getElementById("grid")!;
+for (let ii = 0; ii < blockManager.height; ii++) {
+	const tr = document.createElement("tr");
+	for (let jj = 0; jj < blockManager.width; jj++) {
+		const cell = new Cell(ii * blockManager.width + jj);
 		state.cells.push(cell);
 		cell.addToRow(tr);
 	}
@@ -72,10 +72,8 @@ buttonRight.ontouchstart = function() {
 
 // Get initial blocks
 fetch(serverUrl("/api/blocks"), { onOk: function(req) {
-	var serverBlocks = JSON.parse(req.response) as ({ [key: string]: GridBlock & { index: number } });
-	var keys = Object.keys(serverBlocks);
-	for (var ii = 0; ii < keys.length; ii++) {
-		var key = keys[ii];
+	const serverBlocks = JSON.parse(req.response) as ({ [key: string]: GridBlock & { index: number } });
+	for (const key in serverBlocks) {
 		var block = serverBlocks[key];
 		blockManager.setBlock(block.index, block);
 		if (block.index < blockManager.area())
