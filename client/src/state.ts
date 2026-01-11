@@ -1,12 +1,22 @@
 class State {
 	readonly loadingDiv = document.getElementById("loading")!;
 	readonly blockPage = document.getElementById("block-page")!;
-	loading: boolean;
+	readonly modeButton = document.getElementById("button-mode")!;
+	loading = false;
+	moving = false;
 	cells: Cell[] = [];
 
 	constructor() {
-		this.loading = false;
-		// DO NOT INIT cells HERE. It's not imported yet
+		this.modeButton.ontouchstart = () => {
+			this.moving = !this.moving;
+			if (this.moving) {
+				this.modeButton.innerHTML = "Moving";
+				this.modeButton.classList.add("moving");
+			} else {
+				this.modeButton.innerHTML = "Running";
+				this.modeButton.classList.remove("moving");
+			}
+		};
 	}
 
 	setLoading(enabled: boolean) {

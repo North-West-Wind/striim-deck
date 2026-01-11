@@ -186,3 +186,24 @@ div.disabled {
 .button-page.inactive {
 	opacity: 0.5;
 }
+
+#button-mode {
+	position: fixed;
+	bottom: 12vmin;
+	right: 3vmin;
+	color: #179349;
+	border-radius: 1vmax;
+	z-index: 10;
+	font-size: 3vh;
+	padding: 1vmax;
+  background: -webkit-linear-gradient(#f5f2f5, #afacb6, #d9d7de);
+  background: linear-gradient(#f5f2f5, #afacb6, #d9d7de);
+	border: #818287 solid .5vmax;
+	border-radius: 1vmax;
+}
+
+#button-mode.moving {
+	color: #176193;
+  background: -webkit-linear-gradient(#afacb6, #d9d7de, #afacb6);
+  background: linear-gradient(#afacb6, #d9d7de, #afacb6);
+}

@@ -16,16 +16,19 @@ class Cell {
 
 		this.div.className = "empty";
 		this.div.ontouchstart = () => {
-			this.touchTime = Date.now();
-			if (blockManager.selected === undefined) blockManager.selected = 0;
-			const blockIndex = index + Math.floor(blockManager.selected / blockManager.area()) * blockManager.area();
-			if (blockManager.selected !== blockIndex) {
-				blockManager.selected = blockIndex;
-				state.moveCursor(0, 0);
+			if (state.moving) this.touchTime = Date.now();
+			else {
+				if (blockManager.selected === undefined) blockManager.selected = 0;
+				const blockIndex = index + Math.floor(blockManager.selected / blockManager.area()) * blockManager.area();
+				if (blockManager.selected !== blockIndex) {
+					blockManager.selected = blockIndex;
+					state.moveCursor(0, 0);
+				}
+				state.click();
 			}
 		};
 		this.div.ontouchmove = (ev) => {
-			if (Date.now() - this.touchTime < 500) return;
+			if (!state.moving || Date.now() - this.touchTime < 500) return;
 			const div = ev.currentTarget as HTMLDivElement;
 			const touch = ev.touches[0];
 			div.classList.add("moving");
@@ -46,9 +49,6 @@ class Cell {
 						break;
 					}
 			}
-		};
-		this.div.onmouseup = () => {
-			if (!this.moved) state.click();
 		};
 	}
 
