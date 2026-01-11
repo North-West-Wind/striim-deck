@@ -56,6 +56,8 @@ for (let ii = 0; ii < blockManager.height; ii++) {
 	}
 	table.appendChild(tr);
 }
+for (const cell of state.cells)
+	cell.updateRect();
 
 // Page buttons
 buttonLeft.ontouchstart = function() {

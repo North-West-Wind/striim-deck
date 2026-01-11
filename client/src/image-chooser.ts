@@ -79,7 +79,6 @@ class ImageChooser {
 		// Fetch images
 		state.setLoading(true);
 		this.on("update:success", function() {
-			log("updated images");
 			state.setLoading(false);
 			// Hydrate image list
 			realThis.selected = 0;

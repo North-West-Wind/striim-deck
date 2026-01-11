@@ -103,6 +103,15 @@ class BlockManager {
 	commitDeleteBlock(index: number) {
 		this.blocks[index] = null;
 	}
+
+	swapBlock(a: number, b: number) {
+		const tmp = this.blocks[a];
+		this.blocks[a] = this.blocks[b];
+		this.blocks[b] = tmp;
+		state.updateCells();
+
+		fetch("/api/swap", { method: "POST", body: a + " " + b });
+	}
 }
 
 var blockManager = new BlockManager();

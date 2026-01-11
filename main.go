@@ -72,6 +72,7 @@ func main() {
 	router.HandleFunc("POST /api/new", newBlock)
 	router.HandleFunc("POST /api/delete", deleteBlock)
 	router.HandleFunc("POST /api/run", runBlock)
+	router.HandleFunc("POST /api/swap", swapBlock)
 	router.HandleFunc("GET /api/images/", getImages)
 
 	err := http.ListenAndServe(fmt.Sprintf(":%d", port), router)
@@ -218,6 +219,43 @@ func runBlock(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(output))
 	}
+}
+
+func swapBlock(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	all, err := io.ReadAll(r.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("500 Internal Server Error"))
+		return
+	}
+	var a, b int
+	fmt.Sscanf(string(all), "%d %d", &a, &b)
+	if config.Blocks == nil {
+		w.Write([]byte("200 OK"))
+		return
+	}
+	var blockA, blockB *Block
+	for _, block := range config.Blocks {
+		if block.Index == a {
+			blockA = block
+			if blockB != nil {
+				break
+			}
+		} else if block.Index == b {
+			blockB = block
+			if blockA != nil {
+				break
+			}
+		}
+	}
+	if blockA != nil {
+		blockA.Index = b
+	}
+	if blockB != nil {
+		blockB.Index = a
+	}
+	w.Write([]byte("200 OK"))
 }
 
 func getImages(w http.ResponseWriter, r *http.Request) {

@@ -71,6 +71,15 @@ body {
   background: linear-gradient(#e59999, #ca8a8a);
 }
 
+#grid td > div.moving {
+	position: fixed;
+	left: 0;
+	top: 0;
+	-webkit-transition: left .25s ease, top .25s ease;
+	transition: left .25s ease, top .25s ease;
+	z-index: 10;
+}
+
 #grid img {
 	position: relative;
 	width: 100%;
