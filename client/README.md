@@ -8,6 +8,8 @@
 - `for of` loop
 - Array's `forEach` (and probably other array functions)
 - Promise
+- Classes (luckily typescript takes care of that)
+- EventTarget (bypass with empty element)
 
 ## Unsupported CSS
 - Any kind of viewport units (vw, vh, vmax, vmin)
