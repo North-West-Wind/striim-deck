@@ -102,7 +102,7 @@ class Cell {
 
 		if (block) {
 			this.div.classList.remove("empty");
-			this.div.innerHTML = `<img src="${block.img}">`;
+			if (block.img != this.blockRef?.img) this.div.innerHTML = `<img src="${block.img}">`;
 			this.blockRef = block;
 		} else {
 			this.div.classList.add("empty");
