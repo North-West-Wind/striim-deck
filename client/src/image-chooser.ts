@@ -56,6 +56,7 @@ class ImageChooser {
 		else if (dx < 0) newSelected = newSelected - 1;
 		else if (dx > 0) newSelected = newSelected + 1;
 		if (newSelected < this.selected) newSelected = this.images.length + newSelected;
+		if (newSelected < 0) newSelected = 0;
 		newSelected %= images.length;
 		const needUpdate = Math.floor(this.selected / 8) != Math.floor(newSelected / 8);
 		this.selected = newSelected;
