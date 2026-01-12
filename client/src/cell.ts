@@ -74,6 +74,11 @@ class Cell {
 				}
 			}
 		};
+		// Mouse support. Eh.
+		this.div.onmouseenter = () => {
+			blockManager.selected = this.index + blockManager.pageOffset();
+			state.updateCells();
+		};
 	}
 
 	addToRow(row: HTMLTableRowElement) {

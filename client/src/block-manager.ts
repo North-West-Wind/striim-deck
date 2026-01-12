@@ -9,6 +9,14 @@ class BlockManager {
 		return this.width * this.height;
 	}
 
+	page() {
+		return Math.floor((this.selected || 0) / this.area());
+	}
+
+	pageOffset() {
+		return this.page() * this.area();
+	}
+
 	moveCursor(dx: number, dy: number) {
 		if (this.selected === undefined) this.selected = 0;
 		else {
