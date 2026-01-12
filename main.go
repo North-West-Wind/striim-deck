@@ -301,6 +301,9 @@ func getImages(w http.ResponseWriter, r *http.Request) {
 		}
 		var body strings.Builder
 		for _, entry := range entries {
+			if entry.IsDir() {
+				continue
+			}
 			body.WriteString(entry.Name() + "\n")
 		}
 		w.Write([]byte(body.String()))
