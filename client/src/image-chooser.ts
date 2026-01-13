@@ -16,12 +16,22 @@ class ImageChooser {
 		const eventTarget = this.eventTarget;
 		for (let ii = 0; ii < 8; ii++) {
 			const img = document.getElementById("i" + ii) as HTMLImageElement;
-			img.ontouchstart = function(ev) {
-				var target = ev.currentTarget as HTMLImageElement;
-				if (target.src) eventTarget.dispatchEvent(new CustomEvent("chosen", { detail: target.src }));
+			img.onmousedown = () => (img.ontouchstart!)({} as any);
+			img.ontouchstart = () => {
+				if (img.src)
+					eventTarget.dispatchEvent(new CustomEvent("chosen", { detail: img.src }));
 			};
+			img.onmouseenter = () => this.selected = ii + this.pageOffset();
 			this.imgs.push(img);
 		}
+	}
+
+	page() {
+		return Math.floor(this.selected / 8);
+	}
+
+	pageOffset() {
+		return this.page() * 8;
 	}
 
 	updateImages() {
@@ -76,26 +86,27 @@ class ImageChooser {
 	}
 
 	startFlow() {
-		const realThis = this;
 		// Fetch images
 		state.setLoading(true);
-		this.on("update:success", function() {
+		this.on("update:success", () => {
 			state.setLoading(false);
 			// Hydrate image list
-			realThis.selected = 0;
-			realThis.updateTags();
-			realThis.imgs[0].classList.add("selected");
-			realThis.imagePage.innerHTML = Math.ceil((realThis.selected + 1) / 8) + "/" + Math.ceil(images.length / 8);
+			this.selected = 0;
+			this.updateTags();
+			this.imgs[0].classList.add("selected");
+			this.imagePage.innerHTML = Math.ceil((this.selected + 1) / 8) + "/" + Math.ceil(images.length / 8);
 			// Setup custom button logic
-			realThis.customImageButton.ontouchstart = function() {
+			// Use ontouchstart instead of onclick because Wii U click is sooooo slow
+			this.customImageButton.onmousedown = () => this.customImageButton.ontouchstart!({} as any);
+			this.customImageButton.ontouchstart = () => {
 				const link = prompt("Enter link to image:");
 				if (link === null) return;
-				realThis.eventTarget.dispatchEvent(new CustomEvent("chosen", { detail: link }));
+				this.eventTarget.dispatchEvent(new CustomEvent("chosen", { detail: link }));
 			}
-			realThis.active = true;
-			realThis.imageChooserDiv.classList.remove("disabled");
+			this.active = true;
+			this.imageChooserDiv.classList.remove("disabled");
 		});
-		this.on("update:failure", function() {
+		this.on("update:failure", () => {
 			state.setLoading(false);
 		});
 		this.updateImages();

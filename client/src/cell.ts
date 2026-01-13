@@ -6,6 +6,7 @@ class Cell {
 	running: boolean;
 	classResetTimer?: number;
 	rect?: DOMRect;
+	touched = false;
 	touchTime = 0;
 	moved = false;
 
@@ -15,70 +16,82 @@ class Cell {
 		this.running = false;
 
 		this.div.className = "empty";
-		this.div.ontouchstart = () => {
-			if (state.moving) this.touchTime = Date.now();
-			else {
-				if (blockManager.selected === undefined) blockManager.selected = 0;
-				const blockIndex = index + Math.floor(blockManager.selected / blockManager.area()) * blockManager.area();
-				if (blockManager.selected !== blockIndex) {
-					blockManager.selected = blockIndex;
-					state.moveCursor(0, 0);
-				}
-				state.click();
-			}
-		};
+		this.div.onmousedown = () => this.onTouchStart();
+		this.div.ontouchstart = () => this.onTouchStart();
+		// Mouse move sucks. Imma just ignore it
 		this.div.ontouchmove = (ev) => {
-			if (!state.moving || Date.now() - this.touchTime < 500) return;
-			const div = ev.currentTarget as HTMLDivElement;
-			const touch = ev.touches[0];
-			div.classList.add("moving");
-			div.style.transform = div.style.webkitTransform = `translate(-150%, -50%) translate(${touch.clientX}px, ${touch.clientY}px)`;
-			this.moved = true;
+			if (!ev.touches.length)
+				this.onTouchMove({ x: ev.touches[0].clientX, y: ev.touches[0].clientY });
 		};
+		this.div.onmouseup = (ev) => this.onTouchEnd({ x: ev.clientX, y: ev.clientY });
 		this.div.ontouchend = (ev) => {
-			const div = ev.currentTarget as HTMLDivElement;
-			const touch = ev.changedTouches[0];
-			if (this.moved) {
-				div.style.transform = div.style.webkitTransform = "";
-				div.classList.remove("moving");
-				this.moved = false;
-				const currentPage = Math.floor((blockManager.selected || 0) / blockManager.area());
-				for (const cell of state.cells)
-					if (cell.isHovering(touch.clientX, touch.clientY)) {
-						blockManager.selected = cell.index + currentPage * blockManager.area();
-						blockManager.swapBlock(this.index + currentPage * blockManager.area(), cell.index + currentPage * blockManager.area());
-						return;
-					}
-				const buttonHover = state.isHovering(touch.clientX, touch.clientY);
-				if (buttonHover < 0 && currentPage > 0)
-					for (let ii = currentPage * blockManager.area() - 1; ii >= 0; ii--) {
-						if (!blockManager.blocks[ii]) {
-							blockManager.selected = ii;
-							blockManager.swapBlock(this.index + currentPage * blockManager.area(), ii);
-							break;
-						}
-					}
-				else if (buttonHover > 0) {
-					for (let ii = (currentPage + 1) * blockManager.area(); ii < blockManager.blocks.length; ii++) {
-						if (!blockManager.blocks[ii]) {
-							blockManager.selected = ii;
-							blockManager.swapBlock(this.index + currentPage * blockManager.area(), ii);
-							return;
-						}
-					}
-					let newIndex: number;
-					if (Math.floor(blockManager.blocks.length / blockManager.area()) == currentPage) newIndex = (currentPage + 1) * blockManager.area();
-					else newIndex = blockManager.blocks.length;
-					blockManager.selected = newIndex;
-					blockManager.swapBlock(this.index + currentPage * blockManager.area(), newIndex);
-				}
-			}
+			if (!ev.touches.length)
+				this.onTouchEnd({ x: ev.touches[0].clientX, y: ev.touches[0].clientY });
 		};
-		// Mouse support. Eh.
 		this.div.onmouseenter = () => {
 			blockManager.selected = this.index + blockManager.pageOffset();
 			state.updateCells();
 		};
+	}
+
+	onTouchStart() {
+		if (state.moving) {
+			this.touched = true;
+			this.touchTime = Date.now();
+		} else {
+			if (blockManager.selected === undefined) blockManager.selected = 0;
+			const blockIndex = this.index + Math.floor(blockManager.selected / blockManager.area()) * blockManager.area();
+			if (blockManager.selected !== blockIndex) {
+				blockManager.selected = blockIndex;
+				state.moveCursor(0, 0);
+			}
+			state.click();
+		}
+	}
+
+	onTouchMove(pos: { x: number, y: number }) {
+		if (!this.touched || !state.moving || Date.now() - this.touchTime < 500) return;
+		this.div.classList.add("moving");
+		this.div.style.transform = this.div.style.webkitTransform = `translate(-150%, -50%) translate(${pos.x}px, ${pos.y}px)`;
+		this.moved = true;
+	}
+
+	onTouchEnd(pos: { x: number, y: number }) {
+		if (this.moved) {
+			this.div.style.transform = this.div.style.webkitTransform = "";
+			this.div.classList.remove("moving");
+			this.moved = false;
+			const currentPage = Math.floor((blockManager.selected || 0) / blockManager.area());
+			for (const cell of state.cells)
+				if (cell.isHovering(pos.x, pos.y)) {
+					blockManager.selected = cell.index + currentPage * blockManager.area();
+					blockManager.swapBlock(this.index + currentPage * blockManager.area(), cell.index + currentPage * blockManager.area());
+					return;
+				}
+			const buttonHover = state.isHovering(pos.x, pos.y);
+			if (buttonHover < 0 && currentPage > 0)
+				for (let ii = currentPage * blockManager.area() - 1; ii >= 0; ii--) {
+					if (!blockManager.blocks[ii]) {
+						blockManager.selected = ii;
+						blockManager.swapBlock(this.index + currentPage * blockManager.area(), ii);
+						break;
+					}
+				}
+			else if (buttonHover > 0) {
+				for (let ii = (currentPage + 1) * blockManager.area(); ii < blockManager.blocks.length; ii++) {
+					if (!blockManager.blocks[ii]) {
+						blockManager.selected = ii;
+						blockManager.swapBlock(this.index + currentPage * blockManager.area(), ii);
+						return;
+					}
+				}
+				let newIndex: number;
+				if (Math.floor(blockManager.blocks.length / blockManager.area()) == currentPage) newIndex = (currentPage + 1) * blockManager.area();
+				else newIndex = blockManager.blocks.length;
+				blockManager.selected = newIndex;
+				blockManager.swapBlock(this.index + currentPage * blockManager.area(), newIndex);
+			}
+		}
 	}
 
 	addToRow(row: HTMLTableRowElement) {
