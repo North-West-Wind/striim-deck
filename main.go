@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -30,6 +31,8 @@ var (
 	noGui      bool
 	port       int
 
+	wiiuFs    http.Handler
+	imageFs   http.Handler
 	selfPath  string
 	config    *Config
 	imageDir  string
@@ -48,6 +51,17 @@ func init() {
 	} else {
 		selfPath = path.Dir(selfPath)
 	}
+
+	clientPath := path.Join(selfPath, "client/dist")
+	stat, err := os.Stat(clientPath)
+	if err != nil {
+		Fatalln(errors.New("Cannot find client files"))
+	}
+	if !stat.IsDir() {
+		Fatalln(errors.New("Client path is not a directory. Make sure striim-deck is in the same directory as the client directory."))
+	}
+	wiiuFs = http.FileServer(http.Dir(clientPath))
+
 	configPath, err = xdg.ConfigFile("striim-deck/config.json")
 	if err != nil {
 		Fatalln(err)
@@ -56,6 +70,7 @@ func init() {
 	if err != nil {
 		Fatalln(err)
 	}
+	imageFs = http.FileServer(http.Dir(imageDir))
 	scriptDir, err = xdg.ConfigFile("striim-deck/scripts")
 	if err != nil {
 		Fatalln(err)
@@ -183,13 +198,12 @@ func httpServer() {
 }
 
 func serveWiiU(w http.ResponseWriter, r *http.Request) {
-	fs := http.FileServer(http.Dir(path.Join(selfPath, "client/dist")))
 	Logln(r.URL.Path)
 	if r.URL.Path == "/wiiu/" {
 		http.ServeFile(w, r, path.Join(selfPath, "client/dist/index.html"))
 	} else {
 		r.URL.Path = r.URL.Path[6:]
-		fs.ServeHTTP(w, r)
+		wiiuFs.ServeHTTP(w, r)
 	}
 }
 
@@ -387,7 +401,6 @@ func swapBlock(w http.ResponseWriter, r *http.Request) {
 }
 
 func getImages(w http.ResponseWriter, r *http.Request) {
-	fs := http.FileServer(http.Dir(imageDir))
 	Logln(r.URL.Path)
 	if r.URL.Path == "/api/images/" {
 		entries, err := os.ReadDir(imageDir)
@@ -405,6 +418,6 @@ func getImages(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(body.String()))
 	} else {
 		r.URL.Path = r.URL.Path[12:]
-		fs.ServeHTTP(w, r)
+		imageFs.ServeHTTP(w, r)
 	}
 }
