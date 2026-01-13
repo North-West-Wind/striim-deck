@@ -26,13 +26,15 @@ import (
 )
 
 var (
-	selfPath   string
-	config     *Config
 	configPath string
-	imageDir   string
-	scriptDir  string
+	noGui      bool
 	port       int
-	popup      fyne.Window
+
+	selfPath  string
+	config    *Config
+	imageDir  string
+	scriptDir string
+	popup     fyne.Window
 )
 
 func init() {
@@ -77,12 +79,19 @@ func init() {
 		os.Setenv("PATH", pathEnv+":"+scriptDir)
 	}
 	flag.StringVar(&configPath, "config", configPath, "Config file path")
+	flag.BoolVar(&noGui, "nogui", false, "Disable GUI (including system tray)")
 	flag.IntVar(&port, "port", 8000, "Port of the HTTP server")
+
+	flag.Parse()
 }
 
 func main() {
 	LoadConfig()
 
+	if noGui {
+		httpServer()
+		return
+	}
 	go httpServer()
 
 	a := app.New()
@@ -166,6 +175,7 @@ func httpServer() {
 	router.HandleFunc("POST /api/swap", swapBlock)
 	router.HandleFunc("GET /api/images/", getImages)
 
+	Logf("Starting server at port %d", port)
 	err := http.ListenAndServe(fmt.Sprintf(":%d", port), router)
 	if err != nil {
 		Fatalln(err)
@@ -226,28 +236,38 @@ func newBlock(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("500 Internal Server Error"))
 		return
 	}
-	result := make(chan bool)
-	fyne.Do(func() {
-		popup.SetCloseIntercept(func() {
-			popup.Close()
-			result <- false
-		})
-		popup.SetContent(container.NewVBox(
-			widget.NewLabel("A client has requested adding the following command:"),
-			widget.NewLabel(body.Cmd),
-			widget.NewButton("Accept", func() {
-				popup.Hide()
-				result <- true
-			}),
-			widget.NewButton("Reject", func() {
-				popup.Hide()
+	var accepted bool
+	if noGui {
+		var ans string
+		Logln("A client has requested adding the following command:")
+		Logln(body.Cmd)
+		Logf("Accept? [y/n]")
+		fmt.Scanf("%s", &ans)
+		accepted = strings.ToLower(strings.TrimSpace(ans)) == "y"
+	} else {
+		result := make(chan bool)
+		fyne.Do(func() {
+			popup.SetCloseIntercept(func() {
+				popup.Close()
 				result <- false
-			}),
-		))
-		popup.Show()
-	})
-	ans := <-result
-	if ans {
+			})
+			popup.SetContent(container.NewVBox(
+				widget.NewLabel("A client has requested adding the following command:"),
+				widget.NewLabel(body.Cmd),
+				widget.NewButton("Accept", func() {
+					popup.Hide()
+					result <- true
+				}),
+				widget.NewButton("Reject", func() {
+					popup.Hide()
+					result <- false
+				}),
+			))
+			popup.Show()
+		})
+		accepted = <-result
+	}
+	if accepted {
 		Logln("Accepted")
 		id, err := uuid.NewRandom()
 		if err != nil {
