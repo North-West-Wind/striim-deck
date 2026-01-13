@@ -46,16 +46,18 @@ func init() {
 	if err != nil {
 		Fatalln(err)
 	}
-	if strings.HasPrefix(selfPath, "/tmp/go-build") {
-		selfPath = "."
-	} else {
-		selfPath = path.Dir(selfPath)
-	}
+	selfPath = path.Dir(selfPath)
 
 	clientPath := path.Join(selfPath, "client/dist")
 	stat, err := os.Stat(clientPath)
 	if err != nil {
-		Fatalln(errors.New("Cannot find client files"))
+		// Try to find in working directory
+		selfPath = "."
+		clientPath = path.Join(selfPath, "client/dist")
+		stat, err = os.Stat(clientPath)
+		if err != nil {
+			Fatalln(errors.New("Cannot find client files"))
+		}
 	}
 	if !stat.IsDir() {
 		Fatalln(errors.New("Client path is not a directory. Make sure striim-deck is in the same directory as the client directory."))
