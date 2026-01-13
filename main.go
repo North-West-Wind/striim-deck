@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -16,6 +15,9 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/data/binding"
+	"fyne.io/fyne/v2/driver/desktop"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"github.com/adrg/xdg"
 	"github.com/google/uuid"
@@ -29,14 +31,14 @@ var (
 	imageDir   string
 	scriptDir  string
 	port       int
-	window     fyne.Window
+	popup      fyne.Window
 )
 
 func init() {
 	var err error
 	selfPath, err = os.Executable()
 	if err != nil {
-		log.Fatalln(err)
+		Fatalln(err)
 	}
 	if strings.HasPrefix(selfPath, "/tmp/go-build") {
 		selfPath = "."
@@ -45,26 +47,26 @@ func init() {
 	}
 	configPath, err = xdg.ConfigFile("striim-deck/config.json")
 	if err != nil {
-		log.Fatalln(err)
+		Fatalln(err)
 	}
 	imageDir, err = xdg.ConfigFile("striim-deck/images")
 	if err != nil {
-		log.Fatalln(err)
+		Fatalln(err)
 	}
 	scriptDir, err = xdg.ConfigFile("striim-deck/scripts")
 	if err != nil {
-		log.Fatalln(err)
+		Fatalln(err)
 	}
 	scriptDir, err = filepath.Abs(scriptDir)
 	if err != nil {
-		log.Fatalln(err)
+		Fatalln(err)
 	}
 	if entries, err := os.ReadDir(imageDir); err != nil || len(entries) == 0 {
-		log.Printf("%s is empty. You should put images there!", imageDir)
+		Logf("%s is empty. You should put images there!", imageDir)
 		os.MkdirAll(imageDir, 0755)
 	}
 	if entries, err := os.ReadDir(scriptDir); err != nil || len(entries) == 0 {
-		log.Printf("%s is empty. You should put scripts there!", scriptDir)
+		Logf("%s is empty. You should put scripts there!", scriptDir)
 		os.MkdirAll(scriptDir, 0755)
 	}
 	pathEnv, _ := os.LookupEnv("PATH")
@@ -83,10 +85,44 @@ func main() {
 	go httpServer()
 
 	a := app.New()
-	window = a.NewWindow("Confirmation")
-	window.SetFixedSize(true)
+	logData = binding.BindStringList(&logLines)
+	logList = widget.NewListWithData(logData, func() fyne.CanvasObject {
+		label := widget.NewLabel("")
+		label.Selectable = true
+		return label
+	}, func(item binding.DataItem, co fyne.CanvasObject) {
+		co.(*widget.Label).Bind(item.(binding.String))
+	})
+	window := a.NewWindow("Striim Deck")
+	mainLabel := widget.NewLabel("Striim Deck Server Log")
+	mainLabel.SizeName = theme.SizeNameHeadingText
+	vBox := container.NewVBox(mainLabel)
+	if desk, ok := a.(desktop.App); ok {
+		// We can use system tray
+		window.SetCloseIntercept(func() {
+			window.Hide()
+		})
+		menu := fyne.NewMenu("Striim Deck", fyne.NewMenuItem("Show GUI", func() {
+			window.Show()
+		}))
+		desk.SetSystemTrayMenu(menu)
+	} else {
+		// No system tray sadness
+		window.SetOnClosed(func() {
+			os.Exit(0)
+		})
 
-	a.Run()
+		subLabel := widget.NewLabel("Closing this window exits the program")
+		subLabel.SizeName = theme.SizeNameSubHeadingText
+		vBox.Add(subLabel)
+	}
+	window.SetContent(container.NewBorder(container.NewHBox(vBox, widget.NewButton("Exit", func() {
+		os.Exit(0)
+	})), nil, nil, nil, logList))
+	popup = a.NewWindow("Confirmation")
+	popup.SetFixedSize(true)
+
+	window.ShowAndRun()
 }
 
 func httpServer() {
@@ -103,13 +139,13 @@ func httpServer() {
 
 	err := http.ListenAndServe(fmt.Sprintf(":%d", port), router)
 	if err != nil {
-		log.Fatalln(err)
+		Fatalln(err)
 	}
 }
 
 func serveWiiU(w http.ResponseWriter, r *http.Request) {
 	fs := http.FileServer(http.Dir(path.Join(selfPath, "client/dist")))
-	log.Println(r.URL.Path)
+	Logln(r.URL.Path)
 	if r.URL.Path == "/wiiu/" {
 		http.ServeFile(w, r, path.Join(selfPath, "client/dist/index.html"))
 	} else {
@@ -126,7 +162,7 @@ func handleLog(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("500 Internal Server Error"))
 		return
 	}
-	log.Println(string(all))
+	Logln(string(all))
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("200 OK"))
 }
@@ -163,27 +199,27 @@ func newBlock(w http.ResponseWriter, r *http.Request) {
 	}
 	result := make(chan bool)
 	fyne.Do(func() {
-		window.SetCloseIntercept(func() {
-			window.Close()
+		popup.SetCloseIntercept(func() {
+			popup.Close()
 			result <- false
 		})
-		window.SetContent(container.NewVBox(
+		popup.SetContent(container.NewVBox(
 			widget.NewLabel("A client has requested adding the following command:"),
 			widget.NewLabel(body.Cmd),
 			widget.NewButton("Accept", func() {
-				window.Hide()
+				popup.Hide()
 				result <- true
 			}),
 			widget.NewButton("Reject", func() {
-				window.Hide()
+				popup.Hide()
 				result <- false
 			}),
 		))
-		window.Show()
+		popup.Show()
 	})
 	ans := <-result
 	if ans {
-		log.Println("Accepted")
+		Logln("Accepted")
 		id, err := uuid.NewRandom()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -210,7 +246,7 @@ func newBlock(w http.ResponseWriter, r *http.Request) {
 		w.Write(data)
 		SaveConfig()
 	} else {
-		log.Println("Rejected")
+		Logln("Rejected")
 		w.WriteHeader(http.StatusForbidden)
 		w.Write([]byte("403 Forbidden"))
 	}
@@ -255,7 +291,7 @@ func runBlock(w http.ResponseWriter, r *http.Request) {
 	}
 	output, err := exec.Command(argv[0], argv[1:]...).Output()
 	if err != nil {
-		log.Println(err)
+		Logln(err)
 		w.WriteHeader(http.StatusGone)
 		w.Write([]byte(""))
 	} else {
@@ -303,7 +339,7 @@ func swapBlock(w http.ResponseWriter, r *http.Request) {
 
 func getImages(w http.ResponseWriter, r *http.Request) {
 	fs := http.FileServer(http.Dir(imageDir))
-	log.Println(r.URL.Path)
+	Logln(r.URL.Path)
 	if r.URL.Path == "/api/images/" {
 		entries, err := os.ReadDir(imageDir)
 		if err != nil {
