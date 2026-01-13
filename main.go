@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"fyne.io/fyne/v2"
@@ -96,7 +97,12 @@ func main() {
 	window := a.NewWindow("Striim Deck")
 	mainLabel := widget.NewLabel("Striim Deck Server Log")
 	mainLabel.SizeName = theme.SizeNameHeadingText
-	vBox := container.NewVBox(mainLabel)
+	vBox := container.NewVBox(container.NewHBox(
+		mainLabel,
+		widget.NewButton("Exit", func() {
+			os.Exit(0)
+		}),
+	))
 	if desk, ok := a.(desktop.App); ok {
 		// We can use system tray
 		window.SetCloseIntercept(func() {
@@ -116,13 +122,36 @@ func main() {
 		subLabel.SizeName = theme.SizeNameSubHeadingText
 		vBox.Add(subLabel)
 	}
-	window.SetContent(container.NewBorder(container.NewHBox(vBox, widget.NewButton("Exit", func() {
-		os.Exit(0)
-	})), nil, nil, nil, logList))
+	vBox.Add(container.NewHBox(
+		widget.NewButton("Open Image Directory", func() {
+			openDirectory(imageDir)
+		}),
+		widget.NewButton("Open Script Directory", func() {
+			openDirectory(scriptDir)
+		}),
+	))
+	window.SetContent(container.NewBorder(vBox, nil, nil, nil, logList))
 	popup = a.NewWindow("Confirmation")
 	popup.SetFixedSize(true)
 
 	window.ShowAndRun()
+}
+
+func openDirectory(path string) {
+	var cmd string
+
+	// Chat is this real?
+	// Idk I haven't used Windows or Mac in 5 years
+	switch runtime.GOOS {
+	case "windows":
+		cmd = "explorer"
+	case "darwin":
+		cmd = "open"
+	default:
+		cmd = "xdg-open"
+	}
+	child := exec.Command(cmd, path)
+	child.Start()
 }
 
 func httpServer() {
