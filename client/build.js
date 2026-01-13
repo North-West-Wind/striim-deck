@@ -1,21 +1,11 @@
 const { execSync } = require("child_process");
 const fs = require("fs");
-const path = require("path");
 
 // Transpile TS
 execSync("tsc");
 
-// Transform HTML
-const scriptRegex = /<script\s+src="(.+)"><\/script>/;
-let content = fs.readFileSync("index.html", "utf8");
-let matches = content.match(scriptRegex);
-while (matches) {
-	content = content.replace(scriptRegex, `<script type="text/javascript">${fs.readFileSync(path.join("dist", matches[1]))}</script>`);
-	matches = content.match(scriptRegex);
-}
-content = content.replaceAll(/.*Object.defineProperty.*/gm, "");
-content = content.replaceAll(/.*require.*/gm, "");
-fs.writeFileSync("dist/index.html", content);
+// Copy HTML
+fs.cpSync("index.html", "dist/index.html");
 
 // Transform CSS
 const unitRegex = /(-?(?:(?:\d+)?\.)?\d+)v(w|h|min|max)/;
