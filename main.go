@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -22,6 +23,7 @@ import (
 )
 
 var (
+	selfPath   string
 	config     *Config
 	configPath string
 	imageDir   string
@@ -32,6 +34,15 @@ var (
 
 func init() {
 	var err error
+	selfPath, err = os.Executable()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	if strings.HasPrefix(selfPath, "/tmp/go-build") {
+		selfPath = "."
+	} else {
+		selfPath = path.Dir(selfPath)
+	}
 	configPath, err = xdg.ConfigFile("striim-deck/config.json")
 	if err != nil {
 		log.Fatalln(err)
@@ -97,10 +108,10 @@ func httpServer() {
 }
 
 func serveWiiU(w http.ResponseWriter, r *http.Request) {
-	fs := http.FileServer(http.Dir("client/dist"))
+	fs := http.FileServer(http.Dir(path.Join(selfPath, "client/dist")))
 	log.Println(r.URL.Path)
 	if r.URL.Path == "/wiiu/" {
-		http.ServeFile(w, r, "client/dist/index.html")
+		http.ServeFile(w, r, path.Join(selfPath, "client/dist/index.html"))
 	} else {
 		r.URL.Path = r.URL.Path[6:]
 		fs.ServeHTTP(w, r)
