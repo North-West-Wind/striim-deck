@@ -80,7 +80,7 @@ func init() {
 	}
 	flag.StringVar(&configPath, "config", configPath, "Config file path")
 	flag.BoolVar(&noGui, "nogui", false, "Disable GUI (including system tray)")
-	flag.IntVar(&port, "port", 8000, "Port of the HTTP server")
+	flag.IntVar(&port, "port", 3112, "Port of the HTTP server")
 
 	flag.Parse()
 }
