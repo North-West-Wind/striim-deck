@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/widget"
@@ -16,6 +17,7 @@ var (
 )
 
 func commitLog(line string) {
+	line = time.Now().Format("2006-01-02 15:04:05") + " " + line
 	if logData == nil {
 		logLines = append(logLines, line)
 	} else {
