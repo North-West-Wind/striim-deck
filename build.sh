@@ -30,7 +30,7 @@ for os in "${OSES[@]}"; do
 		mkdir "$os-$arch"
 		(
 			cd "$os-$arch"
-			go build -o "$exe_name" ../../*.go
+			go build -ldflags "-w -s" -o "$exe_name" ../../*.go
 			exe_file=$(ls | head -n 1)
 			cp "../client.zip" "striim-deck-$os-$arch.zip"
 			zip -u "striim-deck-$os-$arch.zip" "$exe_file"
