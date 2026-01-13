@@ -2,7 +2,7 @@ const { execSync } = require("child_process");
 const fs = require("fs");
 
 // Transpile TS
-execSync("tsc");
+execSync("npm run build");
 
 // Copy HTML
 fs.cpSync("index.html", "dist/index.html");

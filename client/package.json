@@ -1,5 +1,9 @@
 {
+	"scripts": {
+		"build": "tsc"
+	},
   "devDependencies": {
-    "@types/wiiu": "^0.0.31"
+    "@types/wiiu": "^0.0.31",
+    "typescript": "^5.9.3"
   }
 }
