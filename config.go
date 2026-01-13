@@ -21,6 +21,7 @@ type Config struct {
 
 func LoadConfig() {
 	config = &Config{}
+	log.Printf("Loading config from %s", configPath)
 	if _, err := os.Stat(configPath); err == nil {
 		// config exists
 		file, err := os.Open(configPath)
@@ -38,6 +39,8 @@ func LoadConfig() {
 			log.Fatalln(err)
 		}
 		log.Printf("Loaded config. Found %d block(s)", len(config.Blocks))
+	} else {
+		log.Println("Config is empty (and that's fine!)")
 	}
 }
 
