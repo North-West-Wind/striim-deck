@@ -3,6 +3,9 @@ Stream deck for the Wii U, utilizing the web browser.
 
 ![Photo of the Striim Deck UI on the Wii U](resources/photo.jpg)
 
+# Video Showcase
+[![Video: I turned my Wii U into a Stream Deck](https://img.youtube.com/vi/wQbfV_zOCLM/0.jpg)](https://www.youtube.com/watch?v=wQbfV_zOCLM)
+
 ## Installation
 Download the ZIP file suitable for your operating system (OS) and architecture (arch) from the releases tab. Your choices are:
 - Operating Systems
