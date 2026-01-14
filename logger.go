@@ -6,14 +6,16 @@ import (
 	"strings"
 	"time"
 
+	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/widget"
 )
 
 var (
-	logList  *widget.List
-	logLines []string
-	logData  binding.StringList
+	logList       *widget.List
+	logLines      []string
+	logData       binding.StringList
+	stickToBottom = true
 )
 
 func commitLog(line string) {
@@ -22,6 +24,11 @@ func commitLog(line string) {
 		logLines = append(logLines, line)
 	} else {
 		logData.Append(line)
+		if stickToBottom && logList != nil {
+			fyne.Do(func() {
+				logList.ScrollToBottom()
+			})
+		}
 	}
 }
 

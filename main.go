@@ -148,6 +148,17 @@ func main() {
 		subLabel.SizeName = theme.SizeNameSubHeadingText
 		vBox.Add(subLabel)
 	}
+	var scrollButton *widget.Button
+	scrollButton = widget.NewButton("Scroll To Bottom", func() {
+		stickToBottom = !stickToBottom
+		if stickToBottom {
+			logList.ScrollToBottom()
+			scrollButton.Importance = widget.SuccessImportance
+		} else {
+			scrollButton.Importance = widget.MediumImportance
+		}
+	})
+	scrollButton.Importance = widget.SuccessImportance
 	vBox.Add(container.NewHBox(
 		widget.NewButton("Open Image Directory", func() {
 			openDirectory(imageDir)
@@ -155,6 +166,7 @@ func main() {
 		widget.NewButton("Open Script Directory", func() {
 			openDirectory(scriptDir)
 		}),
+		scrollButton,
 	))
 	window.SetContent(container.NewBorder(vBox, nil, nil, nil, logList))
 	popup = a.NewWindow("Confirmation")
