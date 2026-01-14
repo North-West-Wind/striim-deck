@@ -19,6 +19,10 @@ But in this case, I don't think you can use this program very well...
 Extract the ZIP. Make sure the executable is in the same folder as the `client/` folder.  
 Other than that requirement, you can place it whereever you want.
 
+I have only tested on Linux AMD64 because that's the only OS I have.
+If you run into basic issues such as things not launching please notify me via issues or DM on Matrix or Discord.
+[Go ask Integrelle in the Elevator on how to contact me.](https://northwestw.in/info-center)
+
 ## Usage
 Run the `striim-deck` (or `striim-deck.exe` for Windows users) file.
 A GUI will open up which displays the server logs of Striim Deck.
