@@ -20,13 +20,13 @@ class Cell {
 		this.div.ontouchstart = () => this.onTouchStart();
 		// Mouse move sucks. Imma just ignore it
 		this.div.ontouchmove = (ev) => {
-			if (!ev.touches.length)
+			if (ev.touches.length)
 				this.onTouchMove({ x: ev.touches[0].clientX, y: ev.touches[0].clientY });
 		};
 		this.div.onmouseup = (ev) => !window.wiiu && this.onTouchEnd({ x: ev.clientX, y: ev.clientY });
 		this.div.ontouchend = (ev) => {
-			if (!ev.touches.length)
-				this.onTouchEnd({ x: ev.touches[0].clientX, y: ev.touches[0].clientY });
+			if (ev.changedTouches.length)
+				this.onTouchEnd({ x: ev.changedTouches[0].clientX, y: ev.changedTouches[0].clientY });
 		};
 		this.div.onmouseenter = () => {
 			blockManager.selected = this.index + blockManager.pageOffset();
