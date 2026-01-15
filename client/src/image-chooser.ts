@@ -19,7 +19,7 @@ class ImageChooser {
 			img.onmousedown = () => (img.ontouchstart!)({} as any);
 			img.ontouchstart = () => {
 				if (img.src)
-					eventTarget.dispatchEvent(new CustomEvent("chosen", { detail: img.src }));
+					eventTarget.dispatchEvent(new CustomEvent("chosen", { detail: img.src.replace("http://" + window.location.host, "") }));
 			};
 			img.onmouseenter = () => this.selected = ii + this.pageOffset();
 			this.imgs.push(img);
