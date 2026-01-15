@@ -9,21 +9,21 @@ class State {
 	cells: Cell[] = [];
 
 	constructor() {
-		this.buttonLeft.onmousedown = () => (this.buttonLeft.ontouchstart!)({} as any);
+		this.buttonLeft.onmousedown = () => !window.wiiu && (this.buttonLeft.ontouchstart!)({} as any);
 		this.buttonLeft.ontouchstart = () => {
 			if (blockManager.selected === undefined) blockManager.selected = 0;
 			blockManager.selected -= blockManager.width * blockManager.height;
 			if (blockManager.selected < 0) blockManager.selected = 0;
 			this.updateCells();
 		};
-		this.buttonRight.onmousedown = () => (this.buttonRight.ontouchstart!)({} as any);
+		this.buttonRight.onmousedown = () => !window.wiiu && (this.buttonRight.ontouchstart!)({} as any);
 		this.buttonRight.ontouchstart = () => {
 			if (blockManager.selected === undefined) blockManager.selected = 0;
 			blockManager.selected += blockManager.width * blockManager.height;
 			this.updateCells();
 		};
 		
-		this.buttonMode.onmousedown = () => (this.buttonMode.ontouchstart!)({} as any);
+		this.buttonMode.onmousedown = () => !window.wiiu && (this.buttonMode.ontouchstart!)({} as any);
 		this.buttonMode.ontouchstart = () => {
 			this.moving = !this.moving;
 			if (this.moving) {
