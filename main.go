@@ -412,6 +412,7 @@ func swapBlock(w http.ResponseWriter, r *http.Request) {
 		blockB.Index = a
 	}
 	w.Write([]byte("200 OK"))
+	SaveConfig()
 }
 
 func getImages(w http.ResponseWriter, r *http.Request) {
