@@ -7,20 +7,17 @@ Stream deck for the Wii U, utilizing the web browser.
 [![Video: I turned my Wii U into a Stream Deck](https://img.youtube.com/vi/wQbfV_zOCLM/0.jpg)](https://www.youtube.com/watch?v=wQbfV_zOCLM)
 
 # Installation
+#### If you're reading this on GitHub, please note that this repository is a mirror. To download, please head to [Codeberg](https://codeberg.org/NorthWestWind/striim-deck) instead.
+
 Download the ZIP file suitable for your operating system (OS) and architecture (arch) from the releases tab. Your choices are:
 - Operating Systems
 	- Windows
-	- MacOS
 	- Linux
 - Architectures
 	- AMD64 (x86_64)
-	- ARM64
 
 If you are not sure about your OS and arch, you are probably using Windows + AMD64.  
 But in this case, I don't think you can use this program very well...
-
-Extract the ZIP. Make sure the executable is in the same folder as the `client/` folder.  
-Other than that requirement, you can place it whereever you want.
 
 I have only tested on Linux AMD64 because that's the only OS I have.
 If you run into basic issues such as things not launching please notify me via issues or DM on Matrix or Discord.
