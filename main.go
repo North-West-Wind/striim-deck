@@ -1,15 +1,14 @@
 package main
 
 import (
+	"embed"
 	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -31,9 +30,10 @@ var (
 	noGui      bool
 	port       int
 
+	//go:embed client/dist
+	embedFs   embed.FS
 	wiiuFs    http.Handler
 	imageFs   http.Handler
-	selfPath  string
 	config    *Config
 	imageDir  string
 	scriptDir string
@@ -42,32 +42,11 @@ var (
 
 func init() {
 	var err error
-	selfPath, err = os.Executable()
-	if err != nil {
-		Fatalln(err)
-	}
-	selfPath = path.Dir(selfPath)
-
-	clientPath := path.Join(selfPath, "client/dist")
-	stat, err := os.Stat(clientPath)
-	if err != nil {
-		// Try to find in working directory
-		selfPath = "."
-		clientPath = path.Join(selfPath, "client/dist")
-		stat, err = os.Stat(clientPath)
-		if err != nil {
-			Fatalln(errors.New("Cannot find client files"))
-		}
-	}
-	if !stat.IsDir() {
-		Fatalln(errors.New("Client path is not a directory. Make sure striim-deck is in the same directory as the client directory."))
-	}
-	wiiuFs = http.FileServer(http.Dir(clientPath))
-
 	configPath, err = xdg.ConfigFile("striim-deck/config.json")
 	if err != nil {
 		Fatalln(err)
 	}
+	wiiuFs = http.FileServer(http.FS(embedFs))
 	imageDir, err = xdg.ConfigFile("striim-deck/images")
 	if err != nil {
 		Fatalln(err)
@@ -111,7 +90,14 @@ func main() {
 	}
 	go httpServer()
 
+	var iconResource fyne.Resource
+	icon, err := embedFs.ReadFile("client/dist/icon.png")
+	if err == nil {
+		iconResource = fyne.NewStaticResource("icon.png", icon)
+	}
+
 	a := app.New()
+	a.SetIcon(iconResource)
 	logData = binding.BindStringList(&logLines)
 	logList = widget.NewListWithData(logData, func() fyne.CanvasObject {
 		label := widget.NewLabel("")
@@ -121,6 +107,7 @@ func main() {
 		co.(*widget.Label).Bind(item.(binding.String))
 	})
 	window := a.NewWindow("Striim Deck")
+	window.SetIcon(iconResource)
 	mainLabel := widget.NewLabel("Striim Deck Server Log")
 	mainLabel.SizeName = theme.SizeNameHeadingText
 	vBox := container.NewVBox(container.NewHBox(
@@ -138,6 +125,7 @@ func main() {
 			window.Show()
 		}))
 		desk.SetSystemTrayMenu(menu)
+		desk.SetSystemTrayIcon(iconResource)
 	} else {
 		// No system tray sadness
 		window.SetOnClosed(func() {
@@ -170,6 +158,7 @@ func main() {
 	))
 	window.SetContent(container.NewBorder(vBox, nil, nil, nil, logList))
 	popup = a.NewWindow("Confirmation")
+	popup.SetIcon(iconResource)
 	popup.SetFixedSize(true)
 
 	window.ShowAndRun()
@@ -213,12 +202,8 @@ func httpServer() {
 
 func serveWiiU(w http.ResponseWriter, r *http.Request) {
 	Logln(r.URL.Path)
-	if r.URL.Path == "/wiiu/" {
-		http.ServeFile(w, r, path.Join(selfPath, "client/dist/index.html"))
-	} else {
-		r.URL.Path = r.URL.Path[6:]
-		wiiuFs.ServeHTTP(w, r)
-	}
+	r.URL.Path = "client/dist/" + r.URL.Path[6:]
+	wiiuFs.ServeHTTP(w, r)
 }
 
 func handleLog(w http.ResponseWriter, r *http.Request) {
