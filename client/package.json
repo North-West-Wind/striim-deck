@@ -2,8 +2,11 @@
 	"scripts": {
 		"build": "tsc"
 	},
-  "devDependencies": {
-    "@types/wiiu": "^0.0.31",
-    "typescript": "^5.9.3"
-  }
+	"devDependencies": {
+		"@types/wiiu": "^0.0.31",
+		"typescript": "^5.9.3"
+	},
+	"dependencies": {
+		"skia-canvas": "^3.0.8"
+	}
 }

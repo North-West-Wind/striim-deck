@@ -1,8 +1,18 @@
+const { Canvas, loadImage } = require("skia-canvas");
 const { execSync } = require("child_process");
 const fs = require("fs");
 
 // Transpile TS
 execSync("npm run build");
+
+// Render SVG
+(async () => {
+	const canvas = new Canvas(256, 256);
+	const ctx = canvas.getContext("2d");
+	const svg = await loadImage("icon.svg");
+	ctx.drawImage(svg, 0, 0, 256, 256);
+	fs.writeFileSync("dist/icon.png", await canvas.png);
+})();
 
 // Copy HTML
 fs.cpSync("index.html", "dist/index.html");
