@@ -87,7 +87,7 @@ class BlockManager {
 			state.updateCells();
 		}, onNotOk: function(req) {
 			state.setLoading(false);
-			if (req.status == 403) alert("Rejected");
+			if (req.status == 401) alert("Rejected");
 			else alert("Error " + req.status);
 		} });
 	}

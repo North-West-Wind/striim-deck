@@ -2,7 +2,15 @@ function serverUrl(url: string) {
 	return "http://" + window.location.host + url;
 }
 
-function fetch(url: string, options?: { method?: string, body?: string, contentType?: string, onOk?: (req: XMLHttpRequest) => void, onNotOk?: (req: XMLHttpRequest) => void }) {
+function fetch(url: string, options?: { method?: string, body?: string, contentType?: string, onOk?: (req: XMLHttpRequest) => void, onNotOk?: (req: XMLHttpRequest) => void, onForbidden?: (req: XMLHttpRequest) => void }) {
+	let secret = window.localStorage.getItem("striimdeck_secret");
+	while (!secret) {
+		const newSecret = prompt("Missing secret. Enter one:");
+		if (newSecret) {
+			secret = newSecret;
+			window.localStorage.setItem("striimdeck_secret", secret);
+		}
+	}
 	var req = new XMLHttpRequest();
 	if (options && options.method) req.open(options.method, url, true);
 	else req.open("GET", url, true);
@@ -10,11 +18,18 @@ function fetch(url: string, options?: { method?: string, body?: string, contentT
 		if (req.readyState == 4) {
 			if (req.status >= 200 && req.status < 300) {
 				if (options && options.onOk) options.onOk(req);
+			} else if (req.status == 403) {
+				// Ask for new secret, then re-fetch
+				secret = "";
+				while (!secret) secret = prompt("Wrong secret. Enter new one:");
+				window.localStorage.setItem("striimdeck_secret", secret);
+				fetch(url, options);
 			} else if (options && options.onNotOk) {
 				options.onNotOk(req);
 			}
 		}
 	};
+	req.setRequestHeader("Authorization", secret);
 	if (options && options.body) {
 		if (options.contentType) req.setRequestHeader("Content-type", options.contentType);
 		else req.setRequestHeader("Content-Type", "text/plain");

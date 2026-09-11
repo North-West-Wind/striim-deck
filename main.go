@@ -110,11 +110,15 @@ func main() {
 	window.SetIcon(iconResource)
 	mainLabel := widget.NewLabel("Striim Deck Server Log")
 	mainLabel.SizeName = theme.SizeNameHeadingText
+	secretLabel := widget.NewLabel(fmt.Sprintf("Secret: %s", config.Secret))
+	secretLabel.SizeName = theme.SizeNameHeadingText
+	secretLabel.Hide()
 	vBox := container.NewVBox(container.NewHBox(
 		mainLabel,
 		widget.NewButton("Exit", func() {
 			os.Exit(0)
 		}),
+		secretLabel,
 	))
 	if desk, ok := a.(desktop.App); ok {
 		// We can use system tray
@@ -147,6 +151,16 @@ func main() {
 		}
 	})
 	scrollButton.Importance = widget.SuccessImportance
+	var secretButton *widget.Button
+	secretButton = widget.NewButton("Show secret", func() {
+		if secretLabel.Visible() {
+			secretButton.Importance = widget.MediumImportance
+			secretLabel.Hide()
+		} else {
+			secretButton.Importance = widget.DangerImportance
+			secretLabel.Show()
+		}
+	})
 	vBox.Add(container.NewHBox(
 		widget.NewButton("Open Image Directory", func() {
 			openDirectory(imageDir)
@@ -155,6 +169,7 @@ func main() {
 			openDirectory(scriptDir)
 		}),
 		scrollButton,
+		secretButton,
 	))
 	window.SetContent(container.NewBorder(vBox, nil, nil, nil, logger.logList))
 	popup = a.NewWindow("Confirmation")
@@ -220,6 +235,12 @@ func handleLog(w http.ResponseWriter, r *http.Request) {
 }
 
 func getBlocks(w http.ResponseWriter, r *http.Request) {
+	secret := r.Header.Get("Authorization")
+	if secret != config.Secret {
+		w.WriteHeader(http.StatusForbidden)
+		w.Write([]byte("403 Forbidden"))
+		return
+	}
 	data, err := json.Marshal(config.Blocks)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -232,6 +253,12 @@ func getBlocks(w http.ResponseWriter, r *http.Request) {
 
 func newBlock(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
+	secret := r.Header.Get("Authorization")
+	if secret != config.Secret {
+		w.WriteHeader(http.StatusForbidden)
+		w.Write([]byte("403 Forbidden"))
+		return
+	}
 	all, err := io.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -309,14 +336,19 @@ func newBlock(w http.ResponseWriter, r *http.Request) {
 		SaveConfig()
 	} else {
 		logger.Logln("Rejected")
-		w.WriteHeader(http.StatusForbidden)
-		w.Write([]byte("403 Forbidden"))
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte("401 Unauthorized"))
 	}
-
 }
 
 func deleteBlock(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
+	secret := r.Header.Get("Authorization")
+	if secret != config.Secret {
+		w.WriteHeader(http.StatusForbidden)
+		w.Write([]byte("403 Forbidden"))
+		return
+	}
 	all, err := io.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -332,6 +364,12 @@ func deleteBlock(w http.ResponseWriter, r *http.Request) {
 
 func runBlock(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
+	secret := r.Header.Get("Authorization")
+	if secret != config.Secret {
+		w.WriteHeader(http.StatusForbidden)
+		w.Write([]byte("403 Forbidden"))
+		return
+	}
 	all, err := io.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -367,6 +405,12 @@ func runBlock(w http.ResponseWriter, r *http.Request) {
 
 func swapBlock(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
+	secret := r.Header.Get("Authorization")
+	if secret != config.Secret {
+		w.WriteHeader(http.StatusForbidden)
+		w.Write([]byte("403 Forbidden"))
+		return
+	}
 	all, err := io.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
