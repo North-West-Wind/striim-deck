@@ -62,6 +62,8 @@ Open up port 3112 for it to function.
 ### Adding Blocks
 1. Use the gamepad joysticks or D-Pad to select an empty block and press A, or alternative, use the stylus or your finger to click on it.
 2. You will be prompted to enter a command. Since I don't know what you want to do, you'll have to figure this one out by yourself.
+	- You can create a script inside the script folder and put the name of the script as the command.
+	- **Caveats:** If you launch Striim Deck from GUI, it's likely the environment variables aren't set up correctly. Set the relevant environment variables if your script is not running properly.
 3. Pick an icon for the button. You can use touch or buttons like step 1.
 4. A popup will appear on your computer. Click "Accept".
 5. You now have a new button!
