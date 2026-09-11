@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"strings"
 	"time"
 
@@ -11,41 +12,53 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-var (
+type loggerStruct struct {
 	logList       *widget.List
 	logLines      []string
 	logData       binding.StringList
-	stickToBottom = true
-)
+	stickToBottom bool
+}
 
-func commitLog(line string) {
+var logger = loggerStruct{
+	logLines:      make([]string, 0),
+	stickToBottom: true,
+}
+
+func (l *loggerStruct) commitLog(line string) {
 	line = time.Now().Format("2006-01-02 15:04:05") + " " + line
-	if logData == nil {
-		logLines = append(logLines, line)
+	if l.logData == nil {
+		l.logLines = append(l.logLines, line)
 	} else {
-		logData.Append(line)
-		if stickToBottom && logList != nil {
+		l.logData.Append(line)
+		if l.stickToBottom && l.logList != nil {
 			fyne.Do(func() {
-				logList.ScrollToBottom()
+				l.logList.ScrollToBottom()
 			})
 		}
 	}
 }
 
-func Logf(format string, a ...any) {
+func (l *loggerStruct) Logf(format string, a ...any) {
 	for line := range strings.SplitSeq(strings.Trim(fmt.Sprintf(format, a...), " \t\n\r"), "\n") {
-		commitLog(line)
+		l.commitLog(line)
 	}
 	log.Printf(format, a...)
 }
 
-func Logln(a ...any) {
+func (l *loggerStruct) Logln(a ...any) {
 	for line := range strings.SplitSeq(strings.Trim(fmt.Sprint(a...), " \t\n\r"), "\n") {
-		commitLog(line)
+		l.commitLog(line)
 	}
 	log.Println(a...)
 }
 
-func Fatalln(a ...any) {
+func (l *loggerStruct) Fatalln(a ...any) {
 	log.Fatalln(a...)
+}
+
+func (l *loggerStruct) Write(data []byte) (int, error) {
+	for line := range strings.SplitSeq(strings.Trim(string(data), " \t\n\r"), "\n") {
+		l.commitLog(line)
+	}
+	return os.Stdout.Write(data)
 }

@@ -20,45 +20,45 @@ type Config struct {
 
 func LoadConfig() {
 	config = &Config{}
-	Logf("Loading config from %s", configPath)
+	logger.Logf("Loading config from %s", configPath)
 	if _, err := os.Stat(configPath); err == nil {
 		// config exists
 		file, err := os.Open(configPath)
 		if err != nil {
-			Fatalln(err)
+			logger.Fatalln(err)
 		}
 		defer file.Close()
 
 		bytes, err := io.ReadAll(file)
 		if err != nil {
-			Fatalln(err)
+			logger.Fatalln(err)
 		}
 		err = json.Unmarshal(bytes, config)
 		if err != nil {
-			Fatalln(err)
+			logger.Fatalln(err)
 		}
-		Logf("Loaded config. Found %d block(s)", len(config.Blocks))
+		logger.Logf("Loaded config. Found %d block(s)", len(config.Blocks))
 	} else {
-		Logln("Config is empty (and that's fine!)")
+		logger.Logln("Config is empty (and that's fine!)")
 	}
 }
 
 func SaveConfig() {
 	data, err := json.Marshal(config)
 	if err != nil {
-		Logln(err)
+		logger.Logln(err)
 		return
 	}
 	err = os.MkdirAll(path.Dir(configPath), 0755)
 	if err != nil {
-		Logln("mkdir failed")
-		Logln(err)
+		logger.Logln("mkdir failed")
+		logger.Logln(err)
 		return
 	}
 	err = os.WriteFile(configPath, data, 0644)
 	if err != nil {
-		Logln("write failed")
-		Logln(err)
+		logger.Logln("write failed")
+		logger.Logln(err)
 		return
 	}
 }

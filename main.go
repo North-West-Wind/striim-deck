@@ -44,28 +44,28 @@ func init() {
 	var err error
 	configPath, err = xdg.ConfigFile("striim-deck/config.json")
 	if err != nil {
-		Fatalln(err)
+		logger.Fatalln(err)
 	}
 	wiiuFs = http.FileServer(http.FS(embedFs))
 	imageDir, err = xdg.ConfigFile("striim-deck/images")
 	if err != nil {
-		Fatalln(err)
+		logger.Fatalln(err)
 	}
 	imageFs = http.FileServer(http.Dir(imageDir))
 	scriptDir, err = xdg.ConfigFile("striim-deck/scripts")
 	if err != nil {
-		Fatalln(err)
+		logger.Fatalln(err)
 	}
 	scriptDir, err = filepath.Abs(scriptDir)
 	if err != nil {
-		Fatalln(err)
+		logger.Fatalln(err)
 	}
 	if entries, err := os.ReadDir(imageDir); err != nil || len(entries) == 0 {
-		Logf("%s is empty. You should put images there!", imageDir)
+		logger.Logf("%s is empty. You should put images there!", imageDir)
 		os.MkdirAll(imageDir, 0755)
 	}
 	if entries, err := os.ReadDir(scriptDir); err != nil || len(entries) == 0 {
-		Logf("%s is empty. You should put scripts there!", scriptDir)
+		logger.Logf("%s is empty. You should put scripts there!", scriptDir)
 		os.MkdirAll(scriptDir, 0755)
 	}
 	pathEnv, _ := os.LookupEnv("PATH")
@@ -98,8 +98,8 @@ func main() {
 
 	a := app.New()
 	a.SetIcon(iconResource)
-	logData = binding.BindStringList(&logLines)
-	logList = widget.NewListWithData(logData, func() fyne.CanvasObject {
+	logger.logData = binding.BindStringList(&logger.logLines)
+	logger.logList = widget.NewListWithData(logger.logData, func() fyne.CanvasObject {
 		label := widget.NewLabel("")
 		label.Selectable = true
 		return label
@@ -138,9 +138,9 @@ func main() {
 	}
 	var scrollButton *widget.Button
 	scrollButton = widget.NewButton("Scroll To Bottom", func() {
-		stickToBottom = !stickToBottom
-		if stickToBottom {
-			logList.ScrollToBottom()
+		logger.stickToBottom = !logger.stickToBottom
+		if logger.stickToBottom {
+			logger.logList.ScrollToBottom()
 			scrollButton.Importance = widget.SuccessImportance
 		} else {
 			scrollButton.Importance = widget.MediumImportance
@@ -156,7 +156,7 @@ func main() {
 		}),
 		scrollButton,
 	))
-	window.SetContent(container.NewBorder(vBox, nil, nil, nil, logList))
+	window.SetContent(container.NewBorder(vBox, nil, nil, nil, logger.logList))
 	popup = a.NewWindow("Confirmation")
 	popup.SetIcon(iconResource)
 	popup.SetFixedSize(true)
@@ -193,15 +193,15 @@ func httpServer() {
 	router.HandleFunc("POST /api/swap", swapBlock)
 	router.HandleFunc("GET /api/images/", getImages)
 
-	Logf("Starting server at port %d", port)
+	logger.Logf("Starting server at port %d", port)
 	err := http.ListenAndServe(fmt.Sprintf(":%d", port), router)
 	if err != nil {
-		Fatalln(err)
+		logger.Fatalln(err)
 	}
 }
 
 func serveWiiU(w http.ResponseWriter, r *http.Request) {
-	Logln(r.URL.Path)
+	logger.Logln(r.URL.Path)
 	r.URL.Path = "client/dist/" + r.URL.Path[6:]
 	wiiuFs.ServeHTTP(w, r)
 }
@@ -214,7 +214,7 @@ func handleLog(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("500 Internal Server Error"))
 		return
 	}
-	Logln(string(all))
+	logger.Logln(string(all))
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("200 OK"))
 }
@@ -252,9 +252,9 @@ func newBlock(w http.ResponseWriter, r *http.Request) {
 	var accepted bool
 	if noGui {
 		var ans string
-		Logln("A client has requested adding the following command:")
-		Logln(body.Cmd)
-		Logf("Accept? [y/n]")
+		logger.Logln("A client has requested adding the following command:")
+		logger.Logln(body.Cmd)
+		logger.Logf("Accept? [y/n]")
 		fmt.Scanf("%s", &ans)
 		accepted = strings.ToLower(strings.TrimSpace(ans)) == "y"
 	} else {
@@ -281,7 +281,7 @@ func newBlock(w http.ResponseWriter, r *http.Request) {
 		accepted = <-result
 	}
 	if accepted {
-		Logln("Accepted")
+		logger.Logln("Accepted")
 		id, err := uuid.NewRandom()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -308,7 +308,7 @@ func newBlock(w http.ResponseWriter, r *http.Request) {
 		w.Write(data)
 		SaveConfig()
 	} else {
-		Logln("Rejected")
+		logger.Logln("Rejected")
 		w.WriteHeader(http.StatusForbidden)
 		w.Write([]byte("403 Forbidden"))
 	}
@@ -351,14 +351,17 @@ func runBlock(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("500 Internal Server Error"))
 		return
 	}
-	output, err := exec.Command(argv[0], argv[1:]...).Output()
+	cmd := exec.Command(argv[0], argv[1:]...)
+	cmd.Stdout = &logger
+	cmd.Stderr = &logger
+	err = cmd.Run()
 	if err != nil {
-		Logln(err)
+		logger.Logln(err)
 		w.WriteHeader(http.StatusGone)
 		w.Write([]byte(""))
 	} else {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(output))
+		w.Write([]byte(""))
 	}
 }
 
@@ -401,7 +404,7 @@ func swapBlock(w http.ResponseWriter, r *http.Request) {
 }
 
 func getImages(w http.ResponseWriter, r *http.Request) {
-	Logln(r.URL.Path)
+	logger.Logln(r.URL.Path)
 	if r.URL.Path == "/api/images/" {
 		entries, err := os.ReadDir(imageDir)
 		if err != nil {
