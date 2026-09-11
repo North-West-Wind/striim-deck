@@ -26,6 +26,7 @@ import (
 )
 
 var (
+	autoAccept bool
 	configPath string
 	noGui      bool
 	port       int
@@ -74,6 +75,7 @@ func init() {
 	} else {
 		os.Setenv("PATH", pathEnv+":"+scriptDir)
 	}
+	flag.BoolVar(&autoAccept, "autoaccept", false, "Automatically accept new blocks")
 	flag.StringVar(&configPath, "config", configPath, "Config file path")
 	flag.BoolVar(&noGui, "nogui", false, "Disable GUI (including system tray)")
 	flag.IntVar(&port, "port", 3112, "Port of the HTTP server")
@@ -82,6 +84,9 @@ func init() {
 }
 
 func main() {
+	if autoAccept {
+		logger.Logln("Auto-accept mode is ON")
+	}
 	LoadConfig()
 
 	if noGui {
@@ -277,7 +282,9 @@ func newBlock(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var accepted bool
-	if noGui {
+	if autoAccept {
+		accepted = true
+	} else if noGui {
 		var ans string
 		logger.Logln("A client has requested adding the following command:")
 		logger.Logln(body.Cmd)
