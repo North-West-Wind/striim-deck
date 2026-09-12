@@ -7,10 +7,9 @@ mkdir -p build/
 echo "Transpiling client files"
 cd client
 node build.js
+zip ../build/client.zip dist/*
 
 cd ..
-
-zip -j build/client.zip client/dist/*
 
 OSES=("linux" "windows")
 ARCHES=("amd64")
