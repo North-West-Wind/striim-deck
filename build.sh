@@ -10,6 +10,8 @@ node build.js
 
 cd ..
 
+zip -j build/client.zip client/dist/*
+
 OSES=("linux" "windows")
 ARCHES=("amd64")
 export CGO_ENABLED=1
