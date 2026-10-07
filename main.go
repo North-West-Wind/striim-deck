@@ -222,7 +222,12 @@ func httpServer() {
 
 func serveWiiU(w http.ResponseWriter, r *http.Request) {
 	logger.Logln(r.URL.Path)
-	r.URL.Path = "client/dist/" + r.URL.Path[6:]
+	file := r.URL.Path[6:]
+	if strings.Contains(r.Header.Get("user-agent"), "Nintendo WiiU") && file == "style.css" {
+		logger.Logln("Received style.css request from Wii U. Replacing with style.wiiu.css...")
+		file = "style.wiiu.css"
+	}
+	r.URL.Path = "client/dist/" + file
 	wiiuFs.ServeHTTP(w, r)
 }
 
@@ -239,9 +244,24 @@ func handleLog(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("200 OK"))
 }
 
+func checkAuth(w http.ResponseWriter, r *http.Request) bool {
+	client := strings.Split(r.RemoteAddr, ":")[0] + ";" + r.Header.Get("x-forwarded-for")
+	for _, trusted := range config.Trusted {
+		if trusted == client {
+			return true
+		}
+	}
+	if r.Header.Get("Authorization") == config.Secret {
+		config.Trusted = append(config.Trusted, client)
+		SaveConfig()
+		logger.Logf("Added %s to trusted list", client)
+		return true
+	}
+	return false
+}
+
 func getBlocks(w http.ResponseWriter, r *http.Request) {
-	secret := r.Header.Get("Authorization")
-	if secret != config.Secret {
+	if !checkAuth(w, r) {
 		w.WriteHeader(http.StatusForbidden)
 		w.Write([]byte("403 Forbidden"))
 		return
@@ -258,8 +278,7 @@ func getBlocks(w http.ResponseWriter, r *http.Request) {
 
 func newBlock(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-	secret := r.Header.Get("Authorization")
-	if secret != config.Secret {
+	if !checkAuth(w, r) {
 		w.WriteHeader(http.StatusForbidden)
 		w.Write([]byte("403 Forbidden"))
 		return
@@ -350,8 +369,7 @@ func newBlock(w http.ResponseWriter, r *http.Request) {
 
 func deleteBlock(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-	secret := r.Header.Get("Authorization")
-	if secret != config.Secret {
+	if !checkAuth(w, r) {
 		w.WriteHeader(http.StatusForbidden)
 		w.Write([]byte("403 Forbidden"))
 		return
@@ -371,8 +389,7 @@ func deleteBlock(w http.ResponseWriter, r *http.Request) {
 
 func runBlock(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-	secret := r.Header.Get("Authorization")
-	if secret != config.Secret {
+	if !checkAuth(w, r) {
 		w.WriteHeader(http.StatusForbidden)
 		w.Write([]byte("403 Forbidden"))
 		return
@@ -412,8 +429,7 @@ func runBlock(w http.ResponseWriter, r *http.Request) {
 
 func swapBlock(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-	secret := r.Header.Get("Authorization")
-	if secret != config.Secret {
+	if !checkAuth(w, r) {
 		w.WriteHeader(http.StatusForbidden)
 		w.Write([]byte("403 Forbidden"))
 		return

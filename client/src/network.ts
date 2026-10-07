@@ -2,15 +2,9 @@ function serverUrl(url: string) {
 	return "http://" + window.location.host + url;
 }
 
-function fetch(url: string, options?: { method?: string, body?: string, contentType?: string, onOk?: (req: XMLHttpRequest) => void, onNotOk?: (req: XMLHttpRequest) => void, onForbidden?: (req: XMLHttpRequest) => void }) {
-	let secret = window.localStorage.getItem("striimdeck_secret");
-	while (!secret) {
-		const newSecret = prompt("Missing secret. Enter one:");
-		if (newSecret) {
-			secret = newSecret;
-			window.localStorage.setItem("striimdeck_secret", secret);
-		}
-	}
+let secret = "";
+
+function fetch(url: string, options?: { method?: string, body?: string, contentType?: string, skipCookie?: boolean, onOk?: (req: XMLHttpRequest) => void, onNotOk?: (req: XMLHttpRequest) => void, onForbidden?: (req: XMLHttpRequest) => void }) {
 	var req = new XMLHttpRequest();
 	if (options && options.method) req.open(options.method, url, true);
 	else req.open("GET", url, true);
@@ -21,8 +15,7 @@ function fetch(url: string, options?: { method?: string, body?: string, contentT
 			} else if (req.status == 403) {
 				// Ask for new secret, then re-fetch
 				secret = "";
-				while (!secret) secret = prompt("Wrong secret. Enter new one:");
-				window.localStorage.setItem("striimdeck_secret", secret);
+				while (!secret) secret = prompt("Missing secret. Enter one:") ?? "";
 				fetch(url, options);
 			} else if (options && options.onNotOk) {
 				options.onNotOk(req);
@@ -39,7 +32,7 @@ function fetch(url: string, options?: { method?: string, body?: string, contentT
 }
 
 function log(message: string) {
-	fetch(serverUrl("/api/log"), { method: "POST", body: message });
+	fetch(serverUrl("/api/log"), { method: "POST", body: message, skipCookie: true });
 }
 
 var images: string[] = [];

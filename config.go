@@ -17,8 +17,9 @@ type Block struct {
 }
 
 type Config struct {
-	Blocks map[string]*Block `json:"blocks"`
-	Secret string            `json:"secret"`
+	Blocks  map[string]*Block `json:"blocks"`
+	Secret  string            `json:"secret"`
+	Trusted []string          `json:"trusted"`
 }
 
 func randomSecret() string {

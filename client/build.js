@@ -17,7 +17,10 @@ execSync("npm run build");
 // Copy HTML
 fs.cpSync("index.html", "dist/index.html");
 
-// Transform CSS
+// Copy CSS
+fs.cpSync("style.css", "dist/style.css");
+
+// Transform CSS for Wii U
 const unitRegex = /(-?(?:(?:\d+)?\.)?\d+)v(w|h|min|max)/;
 const WIDTH = 854;
 const HEIGHT = 448;
@@ -42,4 +45,4 @@ while (matches) {
 	content = content.replace(unitRegex, `${value}px`);
 	matches = content.match(unitRegex);
 }
-fs.writeFileSync("dist/style.css", content);
+fs.writeFileSync("dist/style.wiiu.css", content);
