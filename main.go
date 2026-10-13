@@ -29,6 +29,7 @@ var (
 	autoAccept bool
 	configPath string
 	noGui      bool
+	noTrust    bool
 	port       int
 
 	//go:embed client/dist
@@ -78,6 +79,7 @@ func init() {
 	flag.BoolVar(&autoAccept, "autoaccept", false, "Automatically accept new blocks")
 	flag.StringVar(&configPath, "config", configPath, "Config file path")
 	flag.BoolVar(&noGui, "nogui", false, "Disable GUI (including system tray)")
+	flag.BoolVar(&noTrust, "notrust", false, "Disable trusted clients")
 	flag.IntVar(&port, "port", 3112, "Port of the HTTP server")
 
 	flag.Parse()
@@ -246,15 +248,19 @@ func handleLog(w http.ResponseWriter, r *http.Request) {
 
 func checkAuth(w http.ResponseWriter, r *http.Request) bool {
 	client := strings.Split(r.RemoteAddr, ":")[0] + ";" + r.Header.Get("x-forwarded-for")
-	for _, trusted := range config.Trusted {
-		if trusted == client {
-			return true
+	if !noTrust {
+		for _, trusted := range config.Trusted {
+			if trusted == client {
+				return true
+			}
 		}
 	}
 	if r.Header.Get("Authorization") == config.Secret {
-		config.Trusted = append(config.Trusted, client)
-		SaveConfig()
-		logger.Logf("Added %s to trusted list", client)
+		if !noTrust {
+			config.Trusted = append(config.Trusted, client)
+			SaveConfig()
+			logger.Logf("Added %s to trusted list", client)
+		}
 		return true
 	}
 	return false
